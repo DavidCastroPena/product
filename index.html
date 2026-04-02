@@ -1,0 +1,779 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>How to Talk to Users</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Playfair+Display:ital,wght@0,600;1,600&display=swap');
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --navy:      #0D2B52;
+    --navy-mid:  #1A3F72;
+    --teal:      #0E7490;
+    --teal-light:#0B93B5;
+    --accent:    #17B3D6;
+    --bg:        #EDF4F8;
+    --surface:   #E1EBF2;
+    --white:     #FFFFFF;
+    --dark:      #0D2B52;
+    --mid:       #3A5C7A;
+    --border:    rgba(13,43,82,0.1);
+    --border-strong: rgba(13,43,82,0.18);
+    --do-green:  #1A6B45;
+    --dont-red:  #9B2525;
+    --avoid-bg:  rgba(155,37,37,0.06);
+    --avoid-border: rgba(155,37,37,0.18);
+  }
+
+  html, body {
+    min-height: 100%;
+    background: var(--bg);
+    font-family: 'Inter', system-ui, sans-serif;
+    color: var(--dark);
+  }
+
+  body {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 100vh;
+    padding: 24px 16px;
+  }
+
+  #deck { width: 100%; max-width: 800px; }
+
+  /* Header bar */
+  .topbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 14px;
+    padding: 0 2px;
+  }
+
+  .brand {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--navy);
+    letter-spacing: 0.01em;
+  }
+
+  .brand-logo {
+    height: 28px;
+    width: auto;
+  }
+
+  .brand-divider {
+    width: 1px; height: 18px;
+    background: var(--border-strong);
+  }
+
+  .brand-sub {
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--mid);
+  }
+
+  .slide-label {
+    font-size: 12px;
+    color: var(--mid);
+    font-weight: 500;
+  }
+
+  /* Progress */
+  .progress-bar {
+    height: 3px;
+    background: var(--border);
+    border-radius: 2px;
+    margin-bottom: 14px;
+    overflow: hidden;
+  }
+
+  .progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--teal), var(--accent));
+    border-radius: 2px;
+    transition: width 0.35s ease;
+  }
+
+  /* Dots */
+  .dots {
+    display: flex; gap: 6px;
+    justify-content: center;
+    margin-bottom: 14px;
+  }
+
+  .dot {
+    width: 7px; height: 7px;
+    border-radius: 50%;
+    background: var(--border-strong);
+    cursor: pointer;
+    transition: background 0.2s, transform 0.2s;
+    border: none;
+  }
+
+  .dot.active { background: var(--teal); transform: scale(1.4); }
+  .dot:hover:not(.active) { background: var(--teal-light); opacity: 0.5; }
+
+  /* Slide */
+  .slide {
+    display: none;
+    background: var(--white);
+    border-radius: 18px;
+    border: 1px solid var(--border);
+    box-shadow: 0 2px 20px rgba(13,43,82,0.1), 0 1px 4px rgba(13,43,82,0.06);
+    min-height: 420px;
+    flex-direction: column;
+    animation: fadeUp 0.3s ease;
+    overflow: hidden;
+  }
+
+  .slide.active { display: flex; }
+
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(7px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  .slide-header {
+    padding: 30px 40px 22px;
+    background: var(--navy);
+    position: relative;
+    overflow: hidden;
+  }
+
+  /* Subtle geometric accent on header */
+  .slide-header::after {
+    content: '';
+    position: absolute;
+    right: -40px; top: -40px;
+    width: 180px; height: 180px;
+    border-radius: 50%;
+    border: 32px solid rgba(23,179,214,0.12);
+    pointer-events: none;
+  }
+
+  .slide-num {
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.1em;
+    color: var(--accent);
+    text-transform: uppercase;
+    margin-bottom: 10px;
+  }
+
+  .slide-title {
+    font-family: 'Playfair Display', Georgia, serif;
+    font-size: 28px;
+    font-weight: 600;
+    line-height: 1.2;
+    color: var(--white);
+    position: relative;
+    z-index: 1;
+  }
+
+  .slide-title em {
+    color: var(--accent);
+    font-style: italic;
+  }
+
+  .slide-body {
+    padding: 26px 40px 34px;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+  }
+
+  .tagline {
+    font-size: 15px;
+    color: var(--mid);
+    line-height: 1.65;
+    max-width: 580px;
+  }
+
+  /* Points */
+  .points { display: flex; flex-direction: column; gap: 10px; }
+
+  .point {
+    display: flex;
+    align-items: flex-start;
+    gap: 14px;
+    padding: 13px 16px;
+    border-radius: 10px;
+    border: 1px solid var(--border);
+    background: var(--surface);
+    font-size: 14px;
+    line-height: 1.5;
+  }
+
+  .point-num {
+    min-width: 24px; height: 24px;
+    border-radius: 50%;
+    background: var(--teal);
+    color: #fff;
+    font-size: 11px; font-weight: 600;
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0; margin-top: 1px;
+  }
+
+  .point-icon { font-size: 18px; line-height: 1.4; flex-shrink: 0; }
+
+  .point-text strong { display: block; font-weight: 600; margin-bottom: 3px; color: var(--navy); }
+  .point-text span { font-size: 13px; color: var(--mid); }
+
+  /* Two col */
+  .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+
+  .card {
+    padding: 15px 17px;
+    border-radius: 10px;
+    border: 1px solid var(--border);
+    background: var(--surface);
+  }
+
+  .card-label {
+    font-size: 11px; font-weight: 600;
+    text-transform: uppercase; letter-spacing: 0.08em;
+    margin-bottom: 8px;
+  }
+
+  .card.do .card-label { color: var(--do-green); }
+  .card.dont .card-label { color: var(--dont-red); }
+
+  .card ul { list-style: none; font-size: 13px; color: var(--dark); line-height: 1.75; }
+  .card.do ul li::before { content: "✓  "; color: var(--do-green); font-weight: 600; }
+  .card.dont ul li::before { content: "✗  "; color: var(--dont-red); font-weight: 600; }
+
+  /* Message bubble */
+  .message-bubble {
+    border: 1px solid var(--border);
+    border-left: 3px solid var(--teal);
+    border-radius: 10px;
+    background: var(--surface);
+    padding: 15px 18px;
+    font-size: 13.5px;
+    line-height: 1.65;
+    color: var(--dark);
+  }
+
+  .message-bubble .sender {
+    font-size: 11px; font-weight: 600;
+    color: var(--teal);
+    margin-bottom: 7px;
+    text-transform: uppercase; letter-spacing: 0.07em;
+  }
+
+  .highlight {
+    background: rgba(14,116,144,0.12);
+    border-radius: 4px;
+    padding: 0 3px;
+    color: var(--teal);
+    font-weight: 500;
+  }
+
+  /* Q list */
+  .q-list { display: flex; flex-direction: column; gap: 8px; }
+
+  .q-item {
+    display: flex; gap: 12px; align-items: flex-start;
+    padding: 11px 16px;
+    border-radius: 8px;
+    border-left: 3px solid var(--teal);
+    border-top: 1px solid var(--border);
+    border-right: 1px solid var(--border);
+    border-bottom: 1px solid var(--border);
+    background: var(--surface);
+    font-size: 14px; line-height: 1.5;
+    color: var(--dark);
+  }
+
+  .q-num { font-size: 11px; font-weight: 600; color: var(--teal); min-width: 22px; padding-top: 2px; }
+
+  /* Avoid */
+  .avoid-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+
+  .avoid-item {
+    padding: 11px 14px;
+    border-radius: 8px;
+    border: 1px solid var(--avoid-border);
+    background: var(--avoid-bg);
+    font-size: 13px; color: var(--dark);
+    line-height: 1.45;
+    display: flex; gap: 7px; align-items: flex-start;
+  }
+
+  .avoid-x { color: var(--dont-red); font-weight: 600; flex-shrink: 0; }
+
+  /* Big quote */
+  .big-quote {
+    font-family: 'Playfair Display', Georgia, serif;
+    font-size: 18px;
+    font-style: italic;
+    color: var(--navy);
+    line-height: 1.5;
+    padding: 16px 20px;
+    border-left: 3px solid var(--teal);
+    background: var(--surface);
+    border-radius: 0 10px 10px 0;
+  }
+
+  /* Step grid */
+  .step-grid { display: grid; grid-template-columns: repeat(3,1fr); gap: 10px; }
+
+  .step-card {
+    padding: 16px 14px;
+    border-radius: 10px;
+    border: 1px solid var(--border);
+    background: var(--surface);
+    text-align: center;
+  }
+
+  .step-icon { font-size: 24px; margin-bottom: 8px; }
+  .step-card h4 { font-size: 13px; font-weight: 600; color: var(--navy); margin-bottom: 4px; }
+  .step-card p { font-size: 12px; color: var(--mid); line-height: 1.45; }
+
+  /* Signals */
+  .signal-check { display: flex; flex-direction: column; gap: 7px; }
+
+  .signal {
+    display: flex; align-items: center; gap: 12px;
+    padding: 11px 14px;
+    border-radius: 8px;
+    border: 1px solid var(--border);
+    background: var(--surface);
+    font-size: 13px; color: var(--dark);
+  }
+
+  .signal-badge {
+    font-size: 11px; font-weight: 600;
+    padding: 3px 9px; border-radius: 20px; flex-shrink: 0;
+  }
+
+  .signal-badge.yes { background: rgba(26,107,69,0.12); color: var(--do-green); }
+  .signal-badge.signal { background: rgba(14,116,144,0.12); color: var(--teal); }
+
+  /* Observe */
+  .observe-cards { display: flex; flex-direction: column; gap: 10px; }
+
+  .obs-card {
+    display: flex; gap: 14px;
+    padding: 13px 16px;
+    border-radius: 10px;
+    border: 1px solid var(--border);
+    background: var(--surface);
+    align-items: flex-start;
+  }
+
+  .obs-icon {
+    width: 36px; height: 36px;
+    border-radius: 8px;
+    background: rgba(14,116,144,0.12);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 17px; flex-shrink: 0;
+  }
+
+  .obs-content h4 { font-size: 14px; font-weight: 600; color: var(--navy); margin-bottom: 3px; }
+  .obs-content p { font-size: 13px; color: var(--mid); line-height: 1.5; }
+
+  /* Pills */
+  .pill-row { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 4px; }
+
+  .pill {
+    padding: 5px 12px; border-radius: 20px;
+    font-size: 12px; font-weight: 500;
+    border: 1px solid rgba(14,116,144,0.25);
+    background: rgba(14,116,144,0.08);
+    color: var(--teal);
+  }
+
+  .divider { height: 1px; background: var(--border); margin: 2px 0; }
+
+  .followup-hint {
+    font-size: 13px; color: var(--mid); line-height: 1.6;
+    padding: 11px 15px;
+    border-radius: 8px;
+    border: 1px solid var(--border);
+    background: var(--surface);
+  }
+
+  .followup-hint strong { color: var(--navy); font-weight: 600; }
+
+  /* Nav */
+  .nav-controls {
+    display: flex; align-items: center; justify-content: space-between;
+    margin-top: 16px; padding: 0 2px;
+  }
+
+  .nav-btn {
+    display: flex; align-items: center; gap: 6px;
+    padding: 10px 24px;
+    border-radius: 8px;
+    border: 1px solid var(--border-strong);
+    background: var(--white);
+    color: var(--navy);
+    font-size: 14px; font-weight: 500;
+    cursor: pointer; font-family: inherit;
+    transition: background 0.15s;
+    box-shadow: 0 1px 3px rgba(13,43,82,0.07);
+  }
+
+  .nav-btn:hover { background: var(--surface); }
+  .nav-btn:disabled { opacity: 0.3; cursor: default; box-shadow: none; }
+
+  .nav-btn.primary {
+    background: var(--teal);
+    color: #fff;
+    border-color: var(--teal);
+  }
+
+  .nav-btn.primary:hover { background: var(--teal-light); border-color: var(--teal-light); }
+
+  .kb-hint {
+    text-align: center; font-size: 11px; color: #8ca0b5; margin-top: 10px;
+  }
+
+  .kbd {
+    display: inline-block; padding: 1px 6px;
+    border-radius: 4px; border: 1px solid #c8d8e4;
+    background: #edf4f8; font-size: 10px; color: #5a7a96; font-family: monospace;
+  }
+
+  /* Footer tag on slide header */
+  .igc-tag {
+    position: absolute;
+    bottom: 14px; right: 20px;
+    font-size: 10px; font-weight: 600;
+    letter-spacing: 0.08em;
+    color: rgba(255,255,255,0.3);
+    text-transform: uppercase;
+    z-index: 1;
+  }
+
+  @media (max-width: 600px) {
+    .slide-header { padding: 22px 24px 18px; }
+    .slide-body { padding: 20px 24px 26px; }
+    .slide-title { font-size: 23px; }
+    .two-col, .avoid-grid, .step-grid { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+
+<div id="deck">
+
+  <div class="topbar">
+    <div class="brand">
+      <img class="brand-logo" src="https://igcpharma.com/wp-content/uploads/2023/05/Horizontal_IGC-Pharma-Inc_logo.png" alt="Logo" onerror="this.style.display='none'">
+      <div class="brand-divider"></div>
+      <span class="brand-sub">Internal Training · User Research</span>
+    </div>
+    <div class="slide-label" id="slide-label">Slide 1 of 9</div>
+  </div>
+
+  <div class="progress-bar"><div class="progress-fill" id="progress" style="width:11.1%"></div></div>
+
+  <div class="dots" id="dots"></div>
+
+  <!-- SLIDE 1 -->
+  <div class="slide active" id="s1">
+    <div class="slide-header">
+      <div class="slide-num">01 · Overview</div>
+      <div class="slide-title">How to <em>talk to users</em></div>
+
+    </div>
+    <div class="slide-body">
+      <p class="tagline">A framework from Gustaf Alströmer (YC Partner) on conducting user interviews that generate real insight — not false validation.</p>
+      <div class="points">
+        <div class="point">
+          <div class="point-num">1</div>
+          <div class="point-text"><strong>Find the right users — they'll keep you honest</strong><span>The people who tell you hard truths are more valuable than those who tell you what you want to hear.</span></div>
+        </div>
+        <div class="point">
+          <div class="point-num">2</div>
+          <div class="point-text"><strong>Face users directly — don't hide behind messages</strong><span>The key to user growth is showing up. No-reply emails kill learning.</span></div>
+        </div>
+        <div class="point">
+          <div class="point-num">3</div>
+          <div class="point-text"><strong>Listen first, build second</strong><span>Your job in these conversations is to understand problems, not pitch solutions.</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SLIDE 2 -->
+  <div class="slide" id="s2">
+    <div class="slide-header">
+      <div class="slide-num">02 · Getting in the room</div>
+      <div class="slide-title">Writing <em>outreach</em> that works</div>
+
+    </div>
+    <div class="slide-body">
+      <p class="tagline">Gustaf's messages work because they lead with genuine connection, not a pitch. Study what makes them land.</p>
+      <div class="message-bubble">
+        <div class="sender">Gustaf → CFO at Motion Inc</div>
+        "Hi! This is Gustaf from Airbnb. We <span class="highlight">overlapped in 2014</span> when you were on the Finance team… I'm talking to people <span class="highlight">like yourself</span> to learn as much as possible about how companies think about <span class="highlight">carbon emissions</span>. Would you have time for a <span class="highlight">20 min call</span>?"
+      </div>
+      <div class="two-col">
+        <div class="card do">
+          <div class="card-label">What works</div>
+          <ul>
+            <li>Shared history / connection</li>
+            <li>Clear, bounded ask (20 min)</li>
+            <li>Framed as learning, not selling</li>
+            <li>Specific topic area</li>
+          </ul>
+        </div>
+        <div class="card dont">
+          <div class="card-label">What doesn't</div>
+          <ul>
+            <li>Introducing your product</li>
+            <li>Open-ended "pick your time"</li>
+            <li>Generic "I'd love to connect"</li>
+            <li>Sending from a no-reply</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SLIDE 3 -->
+  <div class="slide" id="s3">
+    <div class="slide-header">
+      <div class="slide-num">03 · The golden rules</div>
+      <div class="slide-title">Don't introduce <em>your product</em></div>
+
+    </div>
+    <div class="slide-body">
+      <div class="big-quote">"Your job is to understand their world, not explain yours."</div>
+      <div class="points">
+        <div class="point">
+          <div class="point-icon">👂</div>
+          <div class="point-text"><strong>Listen, don't talk</strong><span>Aim for 20% speaking, 80% listening. Silence after a response often prompts the most honest answers.</span></div>
+        </div>
+        <div class="point">
+          <div class="point-icon">🔓</div>
+          <div class="point-text"><strong>Ask open-ended questions only</strong><span>Yes/no questions shut conversations down. Open questions reveal mental models you didn't know existed.</span></div>
+        </div>
+        <div class="point">
+          <div class="point-icon">📺</div>
+          <div class="point-text"><strong>Ask them to screenshare</strong><span>Watching someone actually try to solve the problem reveals 10× more than what they say about it.</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SLIDE 4 -->
+  <div class="slide" id="s4">
+    <div class="slide-header">
+      <div class="slide-num">04 · The interview script</div>
+      <div class="slide-title">Questions that <em>unlock insight</em></div>
+
+    </div>
+    <div class="slide-body">
+      <div class="q-list">
+        <div class="q-item"><span class="q-num">01</span>Tell me how you do X today.</div>
+        <div class="q-item"><span class="q-num">02</span>What is the hardest thing about doing X?</div>
+        <div class="q-item"><span class="q-num">03</span>Why is it hard?</div>
+        <div class="q-item"><span class="q-num">04</span>How often do you have to do X?</div>
+        <div class="q-item"><span class="q-num">05</span>Why is it important for your company to do X?</div>
+      </div>
+      <div class="divider"></div>
+      <div class="followup-hint">
+        Follow up every answer with: <strong>"What do you mean by that?"</strong> &nbsp;·&nbsp; <strong>"Can you tell me more?"</strong> &nbsp;·&nbsp; <strong>"Why is this important to you?"</strong>
+      </div>
+    </div>
+  </div>
+
+  <!-- SLIDE 5 -->
+  <div class="slide" id="s5">
+    <div class="slide-header">
+      <div class="slide-num">05 · Traps to avoid</div>
+      <div class="slide-title">Questions that <em>waste the call</em></div>
+
+    </div>
+    <div class="slide-body">
+      <p class="tagline">Users have good problems but often bad solutions. They have no incentive to say no to a feature — so stop asking about features.</p>
+      <div class="avoid-grid">
+        <div class="avoid-item"><span class="avoid-x">✗</span>Will you use our product?</div>
+        <div class="avoid-item"><span class="avoid-x">✗</span>Which features would make it better?</div>
+        <div class="avoid-item"><span class="avoid-x">✗</span>Yes / no questions</div>
+        <div class="avoid-item"><span class="avoid-x">✗</span>How would a better product look?</div>
+        <div class="avoid-item"><span class="avoid-x">✗</span>Two questions at the same time</div>
+        <div class="avoid-item"><span class="avoid-x">✗</span>Hypotheticals about the future</div>
+      </div>
+      <div class="big-quote" style="font-size:16px;">"Users have great problems. They often have terrible solutions. Focus on the problem."</div>
+    </div>
+  </div>
+
+  <!-- SLIDE 6 -->
+  <div class="slide" id="s6">
+    <div class="slide-header">
+      <div class="slide-num">06 · After the conversation</div>
+      <div class="slide-title">Synthesize, <em>then build</em></div>
+
+    </div>
+    <div class="slide-body">
+      <div class="step-grid">
+        <div class="step-card">
+          <div class="step-icon">🗒️</div>
+          <h4>Synthesize learnings</h4>
+          <p>Document verbatim quotes and patterns across interviews</p>
+        </div>
+        <div class="step-card">
+          <div class="step-icon">💡</div>
+          <h4>Problem–solution hypothesis</h4>
+          <p>Write one crisp sentence: "People with X problem need Y"</p>
+        </div>
+        <div class="step-card">
+          <div class="step-icon">✏️</div>
+          <h4>Sketch the MVP</h4>
+          <p>Only the smallest thing that tests your hypothesis</p>
+        </div>
+      </div>
+      <div class="signal-check">
+        <p style="font-size:13px;font-weight:600;color:var(--mid);margin-bottom:2px;">Before building, validate the problem is worth solving:</p>
+        <div class="signal"><span class="signal-badge yes">Green</span>Are people paying money for solutions in this space today?</div>
+        <div class="signal"><span class="signal-badge yes">Green</span>Have users tried to solve this on their own?</div>
+        <div class="signal"><span class="signal-badge signal">Signal</span>Some customers will always be easier to sell to — who?</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SLIDE 7 -->
+  <div class="slide" id="s7">
+    <div class="slide-header">
+      <div class="slide-num">07 · After the MVP</div>
+      <div class="slide-title"><em>Observe</em>, don't tell them what to do</div>
+
+    </div>
+    <div class="slide-body">
+      <div class="observe-cards">
+        <div class="obs-card">
+          <div class="obs-icon">👀</div>
+          <div class="obs-content"><h4>Watch them solve the problem</h4><p>Don't explain the product. Let them use it. Where they get stuck is your roadmap.</p></div>
+        </div>
+        <div class="obs-card">
+          <div class="obs-icon">💬</div>
+          <div class="obs-content"><h4>Prompt them to speak their mind</h4><p>"Tell me what you're thinking right now." Silence is not allowed — narration reveals assumptions.</p></div>
+        </div>
+        <div class="obs-card">
+          <div class="obs-icon">🔒</div>
+          <div class="obs-content"><h4>Create an exclusive channel</h4><p>Make early users feel special. A private Slack, early access, a direct line to you — they give more when they feel invested.</p></div>
+        </div>
+        <div class="obs-card">
+          <div class="obs-icon">🤝</div>
+          <div class="obs-content"><h4>Connect them with each other</h4><p>Users in the same problem space love meeting each other. You become the hub — and learn even more from the conversation.</p></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SLIDE 8 -->
+  <div class="slide" id="s8">
+    <div class="slide-header">
+      <div class="slide-num">08 · Real example</div>
+      <div class="slide-title">Carbon emissions — <em>YC case study</em></div>
+
+    </div>
+    <div class="slide-body">
+      <p class="tagline">Gustaf's actual discovery questions for a potential carbon emissions startup. Notice: no product mention anywhere.</p>
+      <div class="q-list">
+        <div class="q-item"><span class="q-num">→</span>Do you care about carbon emissions at your company? Why or why not?</div>
+        <div class="q-item"><span class="q-num">→</span>Who inside your company would care about this problem most?</div>
+        <div class="q-item"><span class="q-num">→</span>How are you currently measuring or tracking emissions?</div>
+        <div class="q-item"><span class="q-num">→</span>What's the hardest part of your current process?</div>
+        <div class="q-item"><span class="q-num">→</span>Why is this important for your company specifically?</div>
+      </div>
+      <div class="pill-row">
+        <span class="pill">No mention of solution</span>
+        <span class="pill">Follows open-ended format</span>
+        <span class="pill">Maps to org chart</span>
+        <span class="pill">Finds the internal champion</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- SLIDE 9 -->
+  <div class="slide" id="s9">
+    <div class="slide-header">
+      <div class="slide-num">09 · The one-page summary</div>
+      <div class="slide-title">The <em>complete playbook</em></div>
+
+    </div>
+    <div class="slide-body">
+      <div class="points">
+        <div class="point">
+          <div class="point-num">1</div>
+          <div class="point-text"><strong>Outreach</strong><span>Lead with connection, bound the ask, never pitch the product.</span></div>
+        </div>
+        <div class="point">
+          <div class="point-num">2</div>
+          <div class="point-text"><strong>Interview</strong><span>Open-ended questions only. Listen 80%, talk 20%. Screenshare whenever possible.</span></div>
+        </div>
+        <div class="point">
+          <div class="point-num">3</div>
+          <div class="point-text"><strong>Don't ask</strong><span>No feature requests, no yes/no, no two questions at once, no hypotheticals.</span></div>
+        </div>
+        <div class="point">
+          <div class="point-num">4</div>
+          <div class="point-text"><strong>Synthesize</strong><span>Problem–solution hypothesis → smallest possible MVP → validate willingness to pay.</span></div>
+        </div>
+        <div class="point">
+          <div class="point-num">5</div>
+          <div class="point-text"><strong>After MVP</strong><span>Observe silently, prompt narration, build community, make users feel special.</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="nav-controls">
+    <button class="nav-btn" id="prev-btn" onclick="navigate(-1)" disabled>← Back</button>
+    <button class="nav-btn primary" id="next-btn" onclick="navigate(1)">Next →</button>
+  </div>
+
+  <div class="kb-hint">Use <span class="kbd">←</span> <span class="kbd">→</span> arrow keys to navigate</div>
+</div>
+
+<script>
+  const total = 9;
+  let cur = 1;
+  const dotsEl = document.getElementById('dots');
+
+  for (let i = 1; i <= total; i++) {
+    const d = document.createElement('button');
+    d.className = 'dot' + (i === 1 ? ' active' : '');
+    d.setAttribute('aria-label', 'Go to slide ' + i);
+    d.onclick = () => goTo(i);
+    dotsEl.appendChild(d);
+  }
+
+  function goTo(n) {
+    document.getElementById('s' + cur).classList.remove('active');
+    dotsEl.children[cur - 1].classList.remove('active');
+    cur = Math.max(1, Math.min(total, n));
+    document.getElementById('s' + cur).classList.add('active');
+    dotsEl.children[cur - 1].classList.add('active');
+    document.getElementById('slide-label').textContent = 'Slide ' + cur + ' of ' + total;
+    document.getElementById('progress').style.width = (cur / total * 100) + '%';
+    document.getElementById('prev-btn').disabled = cur === 1;
+    document.getElementById('next-btn').disabled = cur === total;
+    document.getElementById('next-btn').textContent = cur === total ? '✓ Done' : 'Next →';
+  }
+
+  function navigate(dir) { goTo(cur + dir); }
+
+  document.addEventListener('keydown', e => {
+    if (e.key === 'ArrowRight' || e.key === 'ArrowDown') navigate(1);
+    if (e.key === 'ArrowLeft'  || e.key === 'ArrowUp')   navigate(-1);
+  });
+</script>
+</body>
+</html>
