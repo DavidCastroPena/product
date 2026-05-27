@@ -3,579 +3,384 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>How to Talk to Users</title>
+<title>How to Talk to Users — Brain Wellness</title>
 <style>
   @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Playfair+Display:ital,wght@0,600;1,600&display=swap');
-
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-
   :root {
-    --navy:      #0D2B52;
-    --navy-mid:  #1A3F72;
-    --teal:      #0E7490;
-    --teal-light:#0B93B5;
-    --accent:    #17B3D6;
-    --bg:        #EDF4F8;
-    --surface:   #E1EBF2;
-    --white:     #FFFFFF;
-    --dark:      #0D2B52;
-    --mid:       #3A5C7A;
-    --border:    rgba(13,43,82,0.1);
-    --border-strong: rgba(13,43,82,0.18);
-    --do-green:  #1A6B45;
-    --dont-red:  #9B2525;
-    --avoid-bg:  rgba(155,37,37,0.06);
-    --avoid-border: rgba(155,37,37,0.18);
+    --navy:#0D2B52; --navy-mid:#1A3F72; --teal:#0E7490; --teal-light:#0B93B5;
+    --accent:#17B3D6; --bg:#EDF4F8; --surface:#E1EBF2; --white:#FFFFFF;
+    --dark:#0D2B52; --mid:#3A5C7A; --border:rgba(13,43,82,0.1);
+    --border-strong:rgba(13,43,82,0.18); --do-green:#1A6B45; --dont-red:#9B2525;
+    --avoid-bg:rgba(155,37,37,0.06); --avoid-border:rgba(155,37,37,0.18);
+    --amber:#92590A; --amber-bg:rgba(146,89,10,0.08); --amber-border:rgba(146,89,10,0.2);
+    --purple:#4A3AAF; --purple-bg:rgba(74,58,175,0.07); --purple-border:rgba(74,58,175,0.2);
+    --quiz-gold:#7a4800; --quiz-accent:#f59e0b;
+  }
+  html,body { min-height:100%; background:var(--bg); font-family:'Inter',system-ui,sans-serif; color:var(--dark); }
+  body { display:flex; flex-direction:column; align-items:center; justify-content:center; min-height:100vh; padding:24px 16px; }
+  #deck { width:100%; max-width:800px; }
+
+  /* ── HUD ── */
+  .hud {
+    display:flex; align-items:center; justify-content:space-between;
+    padding:9px 16px; background:var(--navy); border-radius:10px; margin-bottom:10px;
+  }
+  .hud-left,.hud-right { display:flex; align-items:center; gap:16px; }
+  .hud-section { display:flex; align-items:center; gap:7px; }
+  .hud-lbl { font-size:10px; font-weight:600; letter-spacing:0.08em; text-transform:uppercase; color:rgba(255,255,255,0.45); }
+  .hud-val { font-size:13px; font-weight:600; color:#fff; }
+  .xp-bar { width:100px; height:5px; background:rgba(255,255,255,0.15); border-radius:3px; overflow:hidden; }
+  .xp-fill { height:100%; background:linear-gradient(90deg,var(--teal),var(--accent)); border-radius:3px; transition:width 0.5s ease; width:0%; }
+  .badge-row { display:flex; gap:3px; align-items:center; }
+  .badge-pip { font-size:16px; filter:grayscale(1); opacity:0.25; transition:all 0.4s; }
+  .badge-pip.earned { filter:none; opacity:1; transform:scale(1.1); }
+  .streak-block { display:flex; align-items:center; gap:4px; }
+  .streak-num { font-size:13px; font-weight:600; color:var(--quiz-accent); }
+
+  /* ── Badge popup ── */
+  .badge-popup {
+    position:fixed; top:20px; left:50%; transform:translateX(-50%) translateY(-80px);
+    background:var(--navy); color:#fff; border-radius:12px; padding:12px 20px;
+    display:flex; align-items:center; gap:10px;
+    box-shadow:0 4px 24px rgba(13,43,82,0.25); z-index:999;
+    transition:transform 0.4s cubic-bezier(0.34,1.56,0.64,1);
+    border:1px solid rgba(255,255,255,0.12);
+    pointer-events:none;
+  }
+  .badge-popup.show { transform:translateX(-50%) translateY(0); }
+  .badge-popup-icon { font-size:26px; }
+  .badge-popup-text { font-size:13px; line-height:1.4; }
+  .badge-popup-text strong { display:block; font-size:14px; color:var(--quiz-accent); }
+
+  /* ── XP burst ── */
+  .xp-burst {
+    position:fixed; top:56px; right:24px;
+    font-size:13px; font-weight:600; color:var(--quiz-accent);
+    opacity:0; transform:translateY(0);
+    transition:none; pointer-events:none; z-index:998;
+  }
+  .xp-burst.pop { animation:xpPop 1.2s ease forwards; }
+  @keyframes xpPop {
+    0%   { opacity:1; transform:translateY(0); }
+    60%  { opacity:1; transform:translateY(-24px); }
+    100% { opacity:0; transform:translateY(-32px); }
   }
 
-  html, body {
-    min-height: 100%;
-    background: var(--bg);
-    font-family: 'Inter', system-ui, sans-serif;
-    color: var(--dark);
+  /* ── Topbar ── */
+  .topbar { display:flex; align-items:center; justify-content:space-between; margin-bottom:10px; padding:0 2px; }
+  .brand { display:flex; align-items:center; gap:10px; font-size:13px; font-weight:600; color:var(--navy); }
+  .brand-logo { height:28px; width:auto; }
+  .brand-divider { width:1px; height:18px; background:var(--border-strong); }
+  .brand-sub { font-size:12px; font-weight:500; color:var(--mid); }
+  .slide-label { font-size:12px; color:var(--mid); font-weight:500; }
+
+  /* ── Progress ── */
+  .progress-bar { height:3px; background:var(--border); border-radius:2px; margin-bottom:10px; overflow:hidden; }
+  .progress-fill { height:100%; background:linear-gradient(90deg,var(--teal),var(--accent)); border-radius:2px; transition:width 0.35s ease; }
+
+  /* ── Section track ── */
+  .section-track { display:flex; gap:4px; margin-bottom:6px; }
+  .section-pip { height:3px; flex:1; border-radius:2px; background:var(--border); transition:background 0.25s; }
+  .section-pip.done { background:var(--teal); }
+  .section-pip.active { background:var(--accent); }
+  .section-pip.quiz-pip { background:rgba(245,158,11,0.3); }
+  .section-pip.quiz-pip.active { background:var(--quiz-accent); }
+  .section-labels { display:flex; justify-content:space-between; margin-bottom:12px; }
+  .section-lbl { font-size:10px; font-weight:600; letter-spacing:0.07em; text-transform:uppercase; color:var(--mid); opacity:0.5; transition:opacity 0.25s,color 0.25s; }
+  .section-lbl.active { color:var(--teal); opacity:1; }
+  .section-lbl.active.quiz-active { color:var(--quiz-accent); }
+  .section-lbl.done { opacity:0.75; }
+
+  /* ── Dots ── */
+  .dots { display:flex; gap:4px; justify-content:center; margin-bottom:12px; flex-wrap:wrap; }
+  .dot { width:6px; height:6px; border-radius:50%; background:var(--border-strong); cursor:pointer; transition:background 0.2s,transform 0.2s; border:none; }
+  .dot.active { background:var(--teal); transform:scale(1.5); }
+  .dot.quiz-dot { background:rgba(245,158,11,0.35); }
+  .dot.quiz-dot.active { background:var(--quiz-accent); transform:scale(1.5); }
+  .dot.quiz-dot.answered { background:rgba(26,107,69,0.5); }
+  .dot.section-break { background:rgba(13,43,82,0.06); border-radius:2px; width:2px; height:6px; cursor:default; }
+  .dot:hover:not(.active):not(.section-break) { background:var(--teal-light); opacity:0.5; }
+
+  /* ── Slide base ── */
+  .slide { display:none; background:var(--white); border-radius:18px; border:1px solid var(--border); box-shadow:0 2px 20px rgba(13,43,82,0.1),0 1px 4px rgba(13,43,82,0.06); min-height:420px; flex-direction:column; animation:fadeUp 0.3s ease; overflow:hidden; }
+  .slide.active { display:flex; }
+  @keyframes fadeUp { from{opacity:0;transform:translateY(7px)} to{opacity:1;transform:translateY(0)} }
+
+  .slide-header { padding:30px 40px 22px; background:var(--navy); position:relative; overflow:hidden; }
+  .slide-header::after { content:''; position:absolute; right:-40px; top:-40px; width:180px; height:180px; border-radius:50%; border:32px solid rgba(23,179,214,0.12); pointer-events:none; }
+  .slide-header.header-teal   { background:#064e63; }
+  .slide-header.header-consumer { background:#0a4a30; }
+  .slide-header.header-provider { background:#2d1f7a; }
+  .slide-header.header-quiz   { background:var(--quiz-gold); }
+  .slide-header.header-quiz::after { border-color:rgba(245,158,11,0.15); }
+  .slide-header.header-final  { background:#1a3a1a; }
+
+  .slide-num { font-size:11px; font-weight:600; letter-spacing:0.1em; color:var(--accent); text-transform:uppercase; margin-bottom:10px; }
+  .slide-num.quiz-num { color:var(--quiz-accent); }
+  .slide-title { font-family:'Playfair Display',Georgia,serif; font-size:28px; font-weight:600; line-height:1.2; color:var(--white); position:relative; z-index:1; }
+  .slide-title em { color:var(--accent); font-style:italic; }
+  .slide-title em.quiz-em { color:var(--quiz-accent); }
+  .igc-tag { position:absolute; bottom:14px; right:20px; font-size:10px; font-weight:600; letter-spacing:0.08em; color:rgba(255,255,255,0.3); text-transform:uppercase; z-index:1; }
+
+  .slide-body { padding:26px 40px 34px; flex:1; display:flex; flex-direction:column; gap:14px; }
+  .tagline { font-size:15px; color:var(--mid); line-height:1.65; max-width:580px; }
+
+  /* ── Common components ── */
+  .points { display:flex; flex-direction:column; gap:10px; }
+  .point { display:flex; align-items:flex-start; gap:14px; padding:13px 16px; border-radius:10px; border:1px solid var(--border); background:var(--surface); font-size:14px; line-height:1.5; }
+  .point-num { min-width:24px; height:24px; border-radius:50%; background:var(--teal); color:#fff; font-size:11px; font-weight:600; display:flex; align-items:center; justify-content:center; flex-shrink:0; margin-top:1px; }
+  .point-icon { font-size:18px; line-height:1.4; flex-shrink:0; }
+  .point-text strong { display:block; font-weight:600; margin-bottom:3px; color:var(--navy); }
+  .point-text span { font-size:13px; color:var(--mid); }
+  .two-col { display:grid; grid-template-columns:1fr 1fr; gap:12px; }
+  .card { padding:15px 17px; border-radius:10px; border:1px solid var(--border); background:var(--surface); }
+  .card-label { font-size:11px; font-weight:600; text-transform:uppercase; letter-spacing:0.08em; margin-bottom:8px; }
+  .card.do .card-label { color:var(--do-green); }
+  .card.dont .card-label { color:var(--dont-red); }
+  .card ul { list-style:none; font-size:13px; color:var(--dark); line-height:1.75; }
+  .card.do ul li::before { content:"✓  "; color:var(--do-green); font-weight:600; }
+  .card.dont ul li::before { content:"✗  "; color:var(--dont-red); font-weight:600; }
+  .message-bubble { border:1px solid var(--border); border-left:3px solid var(--teal); border-radius:10px; background:var(--surface); padding:15px 18px; font-size:13.5px; line-height:1.65; color:var(--dark); }
+  .message-bubble .sender { font-size:11px; font-weight:600; color:var(--teal); margin-bottom:7px; text-transform:uppercase; letter-spacing:0.07em; }
+  .highlight { background:rgba(14,116,144,0.12); border-radius:4px; padding:0 3px; color:var(--teal); font-weight:500; }
+  .q-list { display:flex; flex-direction:column; gap:8px; }
+  .q-item { display:flex; gap:12px; align-items:flex-start; padding:11px 16px; border-radius:8px; border-left:3px solid var(--teal); border-top:1px solid var(--border); border-right:1px solid var(--border); border-bottom:1px solid var(--border); background:var(--surface); font-size:14px; line-height:1.5; color:var(--dark); }
+  .q-item.consumer-q { border-left-color:#1A6B45; }
+  .q-item.provider-q { border-left-color:var(--purple); }
+  .q-num { font-size:11px; font-weight:600; color:var(--teal); min-width:22px; padding-top:2px; }
+  .q-num.consumer-num { color:#1A6B45; }
+  .q-num.provider-num { color:var(--purple); }
+  .q-tag { margin-left:auto; font-size:10px; font-weight:600; padding:2px 7px; border-radius:20px; flex-shrink:0; align-self:center; }
+  .tag-pain    { background:rgba(155,37,37,0.1); color:var(--dont-red); }
+  .tag-behavior{ background:var(--amber-bg); color:var(--amber); }
+  .tag-wtp     { background:rgba(26,107,69,0.1); color:var(--do-green); }
+  .tag-vision  { background:var(--purple-bg); color:var(--purple); }
+  .tag-context { background:rgba(14,116,144,0.1); color:var(--teal); }
+  .tag-open    { background:rgba(13,43,82,0.08); color:var(--mid); }
+  .avoid-grid { display:grid; grid-template-columns:1fr 1fr; gap:8px; }
+  .avoid-item { padding:11px 14px; border-radius:8px; border:1px solid var(--avoid-border); background:var(--avoid-bg); font-size:13px; color:var(--dark); line-height:1.45; display:flex; gap:7px; align-items:flex-start; }
+  .avoid-x { color:var(--dont-red); font-weight:600; flex-shrink:0; }
+  .big-quote { font-family:'Playfair Display',Georgia,serif; font-size:18px; font-style:italic; color:var(--navy); line-height:1.5; padding:16px 20px; border-left:3px solid var(--teal); background:var(--surface); border-radius:0 10px 10px 0; }
+  .step-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:10px; }
+  .step-card { padding:16px 14px; border-radius:10px; border:1px solid var(--border); background:var(--surface); text-align:center; }
+  .step-icon { font-size:24px; margin-bottom:8px; }
+  .step-card h4 { font-size:13px; font-weight:600; color:var(--navy); margin-bottom:4px; }
+  .step-card p { font-size:12px; color:var(--mid); line-height:1.45; }
+  .signal-check { display:flex; flex-direction:column; gap:7px; }
+  .signal { display:flex; align-items:center; gap:12px; padding:11px 14px; border-radius:8px; border:1px solid var(--border); background:var(--surface); font-size:13px; color:var(--dark); }
+  .signal-badge { font-size:11px; font-weight:600; padding:3px 9px; border-radius:20px; flex-shrink:0; }
+  .signal-badge.yes    { background:rgba(26,107,69,0.12); color:var(--do-green); }
+  .signal-badge.signal { background:rgba(14,116,144,0.12); color:var(--teal); }
+  .observe-cards { display:flex; flex-direction:column; gap:10px; }
+  .obs-card { display:flex; gap:14px; padding:13px 16px; border-radius:10px; border:1px solid var(--border); background:var(--surface); align-items:flex-start; }
+  .obs-icon { width:36px; height:36px; border-radius:8px; background:rgba(14,116,144,0.12); display:flex; align-items:center; justify-content:center; font-size:17px; flex-shrink:0; }
+  .obs-content h4 { font-size:14px; font-weight:600; color:var(--navy); margin-bottom:3px; }
+  .obs-content p { font-size:13px; color:var(--mid); line-height:1.5; }
+  .pill-row { display:flex; gap:8px; flex-wrap:wrap; margin-top:4px; }
+  .pill { padding:5px 12px; border-radius:20px; font-size:12px; font-weight:500; border:1px solid rgba(14,116,144,0.25); background:rgba(14,116,144,0.08); color:var(--teal); }
+  .divider { height:1px; background:var(--border); margin:2px 0; }
+  .followup-hint { font-size:13px; color:var(--mid); line-height:1.6; padding:11px 15px; border-radius:8px; border:1px solid var(--border); background:var(--surface); }
+  .followup-hint strong { color:var(--navy); font-weight:600; }
+  .plan-table { width:100%; border-collapse:collapse; font-size:13px; }
+  .plan-table th { text-align:left; font-size:11px; font-weight:600; letter-spacing:0.07em; text-transform:uppercase; color:var(--mid); padding:8px 12px; border-bottom:1px solid var(--border-strong); }
+  .plan-table td { padding:10px 12px; border-bottom:1px solid var(--border); vertical-align:top; }
+  .plan-table tr:last-child td { border-bottom:none; }
+  .plan-table tr:hover td { background:var(--surface); }
+  .n-badge { display:inline-block; padding:2px 9px; border-radius:20px; font-size:11px; font-weight:600; }
+  .n-consumer { background:rgba(26,107,69,0.1); color:var(--do-green); }
+  .n-provider  { background:var(--purple-bg); color:var(--purple); }
+  .profile-grid { display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+  .profile-card { padding:14px 16px; border-radius:10px; border:1px solid var(--border); background:var(--surface); }
+  .profile-card .profile-header { display:flex; justify-content:space-between; align-items:baseline; margin-bottom:6px; }
+  .profile-card h4 { font-size:13px; font-weight:600; color:var(--navy); }
+  .profile-card p { font-size:12px; color:var(--mid); line-height:1.5; }
+  .profile-card.consumer-card { border-left:3px solid #1A6B45; }
+  .profile-card.provider-card { border-left:3px solid var(--purple); }
+  .screener-list { display:flex; flex-direction:column; gap:9px; }
+  .screener-item { display:flex; gap:12px; padding:12px 15px; background:var(--surface); border-radius:8px; border:1px solid var(--border); font-size:14px; line-height:1.5; }
+  .screener-q { font-weight:600; color:var(--teal); min-width:20px; flex-shrink:0; }
+  .screener-q.consumer { color:#1A6B45; }
+  .screener-q.provider { color:var(--purple); }
+  .stat-row { display:grid; grid-template-columns:repeat(4,1fr); gap:10px; }
+  .stat-box { text-align:center; padding:14px 10px; border-radius:10px; border:1px solid var(--border); background:var(--surface); }
+  .stat-box .stat-val { font-size:26px; font-weight:600; color:var(--navy); }
+  .stat-box .stat-label { font-size:11px; color:var(--mid); margin-top:3px; }
+
+  /* ── Quiz components ── */
+  .quiz-question { font-size:16px; font-weight:500; color:var(--dark); line-height:1.6; padding:14px 18px; background:rgba(245,158,11,0.06); border:1px solid rgba(245,158,11,0.2); border-radius:10px; }
+  .quiz-options { display:flex; flex-direction:column; gap:8px; }
+  .quiz-opt {
+    text-align:left; padding:12px 16px; border-radius:8px;
+    border:1px solid var(--border); background:var(--surface);
+    font-size:14px; line-height:1.5; color:var(--dark);
+    cursor:pointer; font-family:inherit; transition:background 0.15s, border-color 0.15s;
+    display:flex; align-items:flex-start; gap:10px;
   }
-
-  body {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    min-height: 100vh;
-    padding: 24px 16px;
+  .quiz-opt:hover:not(:disabled) { background:#d8e6ee; border-color:var(--teal); }
+  .quiz-opt:disabled { cursor:default; }
+  .quiz-opt.correct-reveal { background:rgba(26,107,69,0.1); border-color:var(--do-green); color:var(--do-green); }
+  .quiz-opt.wrong-reveal   { background:var(--avoid-bg); border-color:var(--avoid-border); color:var(--dont-red); }
+  .quiz-opt.correct-reveal::before { content:"✓ "; font-weight:600; }
+  .quiz-opt.wrong-reveal::before   { content:"✗ "; font-weight:600; }
+  .quiz-feedback {
+    padding:14px 16px; border-radius:10px; font-size:14px; line-height:1.6;
+    display:none;
   }
-
-  #deck { width: 100%; max-width: 800px; }
-
-  /* Header bar */
-  .topbar {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    margin-bottom: 14px;
-    padding: 0 2px;
-  }
-
-  .brand {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    font-size: 13px;
-    font-weight: 600;
-    color: var(--navy);
-    letter-spacing: 0.01em;
-  }
-
-  .brand-logo {
-    height: 28px;
-    width: auto;
-  }
-
-  .brand-divider {
-    width: 1px; height: 18px;
-    background: var(--border-strong);
-  }
-
-  .brand-sub {
-    font-size: 12px;
-    font-weight: 500;
-    color: var(--mid);
-  }
-
-  .slide-label {
-    font-size: 12px;
-    color: var(--mid);
-    font-weight: 500;
-  }
-
-  /* Progress */
-  .progress-bar {
-    height: 3px;
-    background: var(--border);
-    border-radius: 2px;
-    margin-bottom: 14px;
-    overflow: hidden;
-  }
-
-  .progress-fill {
-    height: 100%;
-    background: linear-gradient(90deg, var(--teal), var(--accent));
-    border-radius: 2px;
-    transition: width 0.35s ease;
-  }
-
-  /* Dots */
-  .dots {
-    display: flex; gap: 6px;
-    justify-content: center;
-    margin-bottom: 14px;
-  }
-
-  .dot {
-    width: 7px; height: 7px;
-    border-radius: 50%;
-    background: var(--border-strong);
-    cursor: pointer;
-    transition: background 0.2s, transform 0.2s;
-    border: none;
-  }
-
-  .dot.active { background: var(--teal); transform: scale(1.4); }
-  .dot:hover:not(.active) { background: var(--teal-light); opacity: 0.5; }
-
-  /* Slide */
-  .slide {
-    display: none;
-    background: var(--white);
-    border-radius: 18px;
-    border: 1px solid var(--border);
-    box-shadow: 0 2px 20px rgba(13,43,82,0.1), 0 1px 4px rgba(13,43,82,0.06);
-    min-height: 420px;
-    flex-direction: column;
-    animation: fadeUp 0.3s ease;
-    overflow: hidden;
-  }
-
-  .slide.active { display: flex; }
-
-  @keyframes fadeUp {
-    from { opacity: 0; transform: translateY(7px); }
-    to   { opacity: 1; transform: translateY(0); }
-  }
-
-  .slide-header {
-    padding: 30px 40px 22px;
-    background: var(--navy);
-    position: relative;
-    overflow: hidden;
-  }
-
-  /* Subtle geometric accent on header */
-  .slide-header::after {
-    content: '';
-    position: absolute;
-    right: -40px; top: -40px;
-    width: 180px; height: 180px;
-    border-radius: 50%;
-    border: 32px solid rgba(23,179,214,0.12);
-    pointer-events: none;
-  }
-
-  .slide-num {
-    font-size: 11px;
-    font-weight: 600;
-    letter-spacing: 0.1em;
-    color: var(--accent);
-    text-transform: uppercase;
-    margin-bottom: 10px;
-  }
-
-  .slide-title {
-    font-family: 'Playfair Display', Georgia, serif;
-    font-size: 28px;
-    font-weight: 600;
-    line-height: 1.2;
-    color: var(--white);
-    position: relative;
-    z-index: 1;
-  }
-
-  .slide-title em {
-    color: var(--accent);
-    font-style: italic;
-  }
-
-  .slide-body {
-    padding: 26px 40px 34px;
-    flex: 1;
-    display: flex;
-    flex-direction: column;
-    gap: 14px;
-  }
-
-  .tagline {
-    font-size: 15px;
-    color: var(--mid);
-    line-height: 1.65;
-    max-width: 580px;
-  }
-
-  /* Points */
-  .points { display: flex; flex-direction: column; gap: 10px; }
-
-  .point {
-    display: flex;
-    align-items: flex-start;
-    gap: 14px;
-    padding: 13px 16px;
-    border-radius: 10px;
-    border: 1px solid var(--border);
-    background: var(--surface);
-    font-size: 14px;
-    line-height: 1.5;
-  }
-
-  .point-num {
-    min-width: 24px; height: 24px;
-    border-radius: 50%;
-    background: var(--teal);
-    color: #fff;
-    font-size: 11px; font-weight: 600;
-    display: flex; align-items: center; justify-content: center;
-    flex-shrink: 0; margin-top: 1px;
-  }
-
-  .point-icon { font-size: 18px; line-height: 1.4; flex-shrink: 0; }
-
-  .point-text strong { display: block; font-weight: 600; margin-bottom: 3px; color: var(--navy); }
-  .point-text span { font-size: 13px; color: var(--mid); }
-
-  /* Two col */
-  .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
-
-  .card {
-    padding: 15px 17px;
-    border-radius: 10px;
-    border: 1px solid var(--border);
-    background: var(--surface);
-  }
-
-  .card-label {
-    font-size: 11px; font-weight: 600;
-    text-transform: uppercase; letter-spacing: 0.08em;
-    margin-bottom: 8px;
-  }
-
-  .card.do .card-label { color: var(--do-green); }
-  .card.dont .card-label { color: var(--dont-red); }
-
-  .card ul { list-style: none; font-size: 13px; color: var(--dark); line-height: 1.75; }
-  .card.do ul li::before { content: "✓  "; color: var(--do-green); font-weight: 600; }
-  .card.dont ul li::before { content: "✗  "; color: var(--dont-red); font-weight: 600; }
-
-  /* Message bubble */
-  .message-bubble {
-    border: 1px solid var(--border);
-    border-left: 3px solid var(--teal);
-    border-radius: 10px;
-    background: var(--surface);
-    padding: 15px 18px;
-    font-size: 13.5px;
-    line-height: 1.65;
-    color: var(--dark);
-  }
-
-  .message-bubble .sender {
-    font-size: 11px; font-weight: 600;
-    color: var(--teal);
-    margin-bottom: 7px;
-    text-transform: uppercase; letter-spacing: 0.07em;
-  }
-
-  .highlight {
-    background: rgba(14,116,144,0.12);
-    border-radius: 4px;
-    padding: 0 3px;
-    color: var(--teal);
-    font-weight: 500;
-  }
-
-  /* Q list */
-  .q-list { display: flex; flex-direction: column; gap: 8px; }
-
-  .q-item {
-    display: flex; gap: 12px; align-items: flex-start;
-    padding: 11px 16px;
-    border-radius: 8px;
-    border-left: 3px solid var(--teal);
-    border-top: 1px solid var(--border);
-    border-right: 1px solid var(--border);
-    border-bottom: 1px solid var(--border);
-    background: var(--surface);
-    font-size: 14px; line-height: 1.5;
-    color: var(--dark);
-  }
-
-  .q-num { font-size: 11px; font-weight: 600; color: var(--teal); min-width: 22px; padding-top: 2px; }
-
-  /* Avoid */
-  .avoid-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
-
-  .avoid-item {
-    padding: 11px 14px;
-    border-radius: 8px;
-    border: 1px solid var(--avoid-border);
-    background: var(--avoid-bg);
-    font-size: 13px; color: var(--dark);
-    line-height: 1.45;
-    display: flex; gap: 7px; align-items: flex-start;
-  }
-
-  .avoid-x { color: var(--dont-red); font-weight: 600; flex-shrink: 0; }
-
-  /* Big quote */
-  .big-quote {
-    font-family: 'Playfair Display', Georgia, serif;
-    font-size: 18px;
-    font-style: italic;
-    color: var(--navy);
-    line-height: 1.5;
-    padding: 16px 20px;
-    border-left: 3px solid var(--teal);
-    background: var(--surface);
-    border-radius: 0 10px 10px 0;
-  }
-
-  /* Step grid */
-  .step-grid { display: grid; grid-template-columns: repeat(3,1fr); gap: 10px; }
-
-  .step-card {
-    padding: 16px 14px;
-    border-radius: 10px;
-    border: 1px solid var(--border);
-    background: var(--surface);
-    text-align: center;
-  }
-
-  .step-icon { font-size: 24px; margin-bottom: 8px; }
-  .step-card h4 { font-size: 13px; font-weight: 600; color: var(--navy); margin-bottom: 4px; }
-  .step-card p { font-size: 12px; color: var(--mid); line-height: 1.45; }
-
-  /* Signals */
-  .signal-check { display: flex; flex-direction: column; gap: 7px; }
-
-  .signal {
-    display: flex; align-items: center; gap: 12px;
-    padding: 11px 14px;
-    border-radius: 8px;
-    border: 1px solid var(--border);
-    background: var(--surface);
-    font-size: 13px; color: var(--dark);
-  }
-
-  .signal-badge {
-    font-size: 11px; font-weight: 600;
-    padding: 3px 9px; border-radius: 20px; flex-shrink: 0;
-  }
-
-  .signal-badge.yes { background: rgba(26,107,69,0.12); color: var(--do-green); }
-  .signal-badge.signal { background: rgba(14,116,144,0.12); color: var(--teal); }
-
-  /* Observe */
-  .observe-cards { display: flex; flex-direction: column; gap: 10px; }
-
-  .obs-card {
-    display: flex; gap: 14px;
-    padding: 13px 16px;
-    border-radius: 10px;
-    border: 1px solid var(--border);
-    background: var(--surface);
-    align-items: flex-start;
-  }
-
-  .obs-icon {
-    width: 36px; height: 36px;
-    border-radius: 8px;
-    background: rgba(14,116,144,0.12);
-    display: flex; align-items: center; justify-content: center;
-    font-size: 17px; flex-shrink: 0;
-  }
-
-  .obs-content h4 { font-size: 14px; font-weight: 600; color: var(--navy); margin-bottom: 3px; }
-  .obs-content p { font-size: 13px; color: var(--mid); line-height: 1.5; }
-
-  /* Pills */
-  .pill-row { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 4px; }
-
-  .pill {
-    padding: 5px 12px; border-radius: 20px;
-    font-size: 12px; font-weight: 500;
-    border: 1px solid rgba(14,116,144,0.25);
-    background: rgba(14,116,144,0.08);
-    color: var(--teal);
-  }
-
-  .divider { height: 1px; background: var(--border); margin: 2px 0; }
-
-  .followup-hint {
-    font-size: 13px; color: var(--mid); line-height: 1.6;
-    padding: 11px 15px;
-    border-radius: 8px;
-    border: 1px solid var(--border);
-    background: var(--surface);
-  }
-
-  .followup-hint strong { color: var(--navy); font-weight: 600; }
-
-  /* Nav */
-  .nav-controls {
-    display: flex; align-items: center; justify-content: space-between;
-    margin-top: 16px; padding: 0 2px;
-  }
-
-  .nav-btn {
-    display: flex; align-items: center; gap: 6px;
-    padding: 10px 24px;
-    border-radius: 8px;
-    border: 1px solid var(--border-strong);
-    background: var(--white);
-    color: var(--navy);
-    font-size: 14px; font-weight: 500;
-    cursor: pointer; font-family: inherit;
-    transition: background 0.15s;
-    box-shadow: 0 1px 3px rgba(13,43,82,0.07);
-  }
-
-  .nav-btn:hover { background: var(--surface); }
-  .nav-btn:disabled { opacity: 0.3; cursor: default; box-shadow: none; }
-
-  .nav-btn.primary {
-    background: var(--teal);
-    color: #fff;
-    border-color: var(--teal);
-  }
-
-  .nav-btn.primary:hover { background: var(--teal-light); border-color: var(--teal-light); }
-
-  .kb-hint {
-    text-align: center; font-size: 11px; color: #8ca0b5; margin-top: 10px;
-  }
-
-  .kbd {
-    display: inline-block; padding: 1px 6px;
-    border-radius: 4px; border: 1px solid #c8d8e4;
-    background: #edf4f8; font-size: 10px; color: #5a7a96; font-family: monospace;
-  }
-
-  /* Footer tag on slide header */
-  .igc-tag {
-    position: absolute;
-    bottom: 14px; right: 20px;
-    font-size: 10px; font-weight: 600;
-    letter-spacing: 0.08em;
-    color: rgba(255,255,255,0.3);
-    text-transform: uppercase;
-    z-index: 1;
-  }
-
-  @media (max-width: 600px) {
-    .slide-header { padding: 22px 24px 18px; }
-    .slide-body { padding: 20px 24px 26px; }
-    .slide-title { font-size: 23px; }
-    .two-col, .avoid-grid, .step-grid { grid-template-columns: 1fr; }
+  .quiz-feedback.show { display:block; }
+  .quiz-feedback.correct { background:rgba(26,107,69,0.08); border:1px solid rgba(26,107,69,0.2); color:#0a3a20; }
+  .quiz-feedback.wrong   { background:var(--avoid-bg); border:1px solid var(--avoid-border); color:#5a1010; }
+  .quiz-feedback strong { font-weight:600; }
+
+  /* ── Final score ── */
+  .score-ring { width:120px; height:120px; margin:0 auto; position:relative; }
+  .score-ring svg { width:100%; height:100%; transform:rotate(-90deg); }
+  .score-ring-inner { position:absolute; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:center; }
+  .score-ring-val { font-size:28px; font-weight:600; color:var(--navy); }
+  .score-ring-lbl { font-size:11px; color:var(--mid); }
+  .final-badges { display:flex; gap:12px; justify-content:center; flex-wrap:wrap; margin-top:4px; }
+  .final-badge { text-align:center; }
+  .final-badge-icon { font-size:28px; display:block; margin-bottom:4px; }
+  .final-badge-icon.locked { filter:grayscale(1); opacity:0.25; }
+  .final-badge-name { font-size:11px; color:var(--mid); }
+
+  /* ── Nav ── */
+  .nav-controls { display:flex; align-items:center; justify-content:space-between; margin-top:16px; padding:0 2px; }
+  .nav-btn { display:flex; align-items:center; gap:6px; padding:10px 24px; border-radius:8px; border:1px solid var(--border-strong); background:var(--white); color:var(--navy); font-size:14px; font-weight:500; cursor:pointer; font-family:inherit; transition:background 0.15s; box-shadow:0 1px 3px rgba(13,43,82,0.07); }
+  .nav-btn:hover { background:var(--surface); }
+  .nav-btn:disabled { opacity:0.3; cursor:default; box-shadow:none; }
+  .nav-btn.primary { background:var(--teal); color:#fff; border-color:var(--teal); }
+  .nav-btn.primary:hover { background:var(--teal-light); border-color:var(--teal-light); }
+  .nav-btn.locked { opacity:0.4; cursor:not-allowed; }
+  .kb-hint { text-align:center; font-size:11px; color:#8ca0b5; margin-top:10px; }
+  .kbd { display:inline-block; padding:1px 6px; border-radius:4px; border:1px solid #c8d8e4; background:#edf4f8; font-size:10px; color:#5a7a96; font-family:monospace; }
+
+  @media (max-width:600px) {
+    .slide-header { padding:22px 24px 18px; }
+    .slide-body { padding:20px 24px 26px; }
+    .slide-title { font-size:23px; }
+    .two-col,.avoid-grid,.step-grid,.profile-grid,.stat-row { grid-template-columns:1fr; }
   }
 </style>
 </head>
 <body>
 
+<!-- Badge popup -->
+<div class="badge-popup" id="badge-popup">
+  <div class="badge-popup-icon" id="bp-icon"></div>
+  <div class="badge-popup-text"><strong id="bp-title"></strong><span id="bp-sub"></span></div>
+</div>
+<div class="xp-burst" id="xp-burst">+100 XP</div>
+
 <div id="deck">
 
-  <div class="topbar">
-    <div class="brand">
-      <img class="brand-logo" src="https://igcpharma.com/wp-content/uploads/2023/05/Horizontal_IGC-Pharma-Inc_logo.png" alt="Logo" onerror="this.style.display='none'">
-      <div class="brand-divider"></div>
-      <span class="brand-sub">Internal Training · User Research</span>
+  <div class="hud">
+    <div class="hud-left">
+      <img style="height:20px;filter:brightness(0) invert(1)" src="https://igcpharma.com/wp-content/uploads/2023/05/Horizontal_IGC-Pharma-Inc_logo.png" alt="" onerror="this.style.display='none'">
+      <div class="hud-section">
+        <span class="hud-lbl">XP</span>
+        <div class="xp-bar"><div class="xp-fill" id="xp-fill"></div></div>
+        <span class="hud-val" id="xp-val">0</span>
+      </div>
     </div>
-    <div class="slide-label" id="slide-label">Slide 1 of 9</div>
-  </div>
-
-  <div class="progress-bar"><div class="progress-fill" id="progress" style="width:11.1%"></div></div>
-
-  <div class="dots" id="dots"></div>
-
-  <!-- SLIDE 1 -->
-  <div class="slide active" id="s1">
-    <div class="slide-header">
-      <div class="slide-num">01 · Overview</div>
-      <div class="slide-title">How to <em>talk to users</em></div>
-
-    </div>
-    <div class="slide-body">
-      <p class="tagline">A framework inspired by Gustaf Alströmer (YC Partner) on conducting user interviews that generate real insight — not false validation.</p>
-      <div class="points">
-        <div class="point">
-          <div class="point-num">1</div>
-          <div class="point-text"><strong>Find the right users — they'll keep you honest</strong><span>The people who tell you hard truths are more valuable than those who tell you what you want to hear.</span></div>
+    <div class="hud-right">
+      <div class="hud-section">
+        <span class="hud-lbl">Badges</span>
+        <div class="badge-row" id="badge-row">
+          <span class="badge-pip" id="bp0" title="Framework Master">🎓</span>
+          <span class="badge-pip" id="bp1" title="Research Strategist">🎯</span>
+          <span class="badge-pip" id="bp2" title="Consumer Whisperer">👂</span>
+          <span class="badge-pip" id="bp3" title="Provider Expert">🏥</span>
+          <span class="badge-pip" id="bp4" title="Synthesizer">🧠</span>
+          <span class="badge-pip" id="bp5" title="Sharp Shooter">⭐</span>
+          <span class="badge-pip" id="bp6" title="Brain Wellness Pro">🔥</span>
         </div>
-        <div class="point">
-          <div class="point-num">2</div>
-          <div class="point-text"><strong>Face users directly — don't hide behind messages</strong><span>The key to user growth is showing up. No-reply emails kill learning.</span></div>
-        </div>
-        <div class="point">
-          <div class="point-num">3</div>
-          <div class="point-text"><strong>Listen first, build second</strong><span>Your job in these conversations is to understand problems, not pitch solutions.</span></div>
-        </div>
+      </div>
+      <div class="hud-section streak-block">
+        <span class="hud-lbl">Streak</span>
+        <span class="streak-num" id="streak-val">0</span>
+        <span style="font-size:14px">🔥</span>
       </div>
     </div>
   </div>
 
-  <!-- SLIDE 2 -->
+  <div class="topbar">
+    <div class="brand">
+      <div class="brand-divider"></div>
+      <span class="brand-sub">User Research · Brain Wellness</span>
+    </div>
+    <div class="slide-label" id="slide-label">Slide 1 of 23</div>
+  </div>
+
+  <div class="progress-bar"><div class="progress-fill" id="progress" style="width:4.3%"></div></div>
+  <div class="section-track" id="section-track"></div>
+  <div class="section-labels">
+    <span class="section-lbl active" id="sl0">Framework</span>
+    <span class="section-lbl" id="sl1">Research plan</span>
+    <span class="section-lbl" id="sl2">Consumers</span>
+    <span class="section-lbl" id="sl3">Providers</span>
+    <span class="section-lbl" id="sl4">Synthesis</span>
+  </div>
+  <div class="dots" id="dots"></div>
+
+  <!-- ══════════ SECTION 1: FRAMEWORK (slides 1-9) ══════════ -->
+
+  <div class="slide active" id="s1">
+    <div class="slide-header">
+      <div class="slide-num">01 · Overview</div>
+      <div class="slide-title">How to <em>talk to users</em></div>
+      <div class="igc-tag">IGCPharma.com</div>
+    </div>
+    <div class="slide-body">
+      <p class="tagline">A framework inspired by Gustaf Alströmer (YC Partner) on conducting user interviews that generate real insight — not false validation.</p>
+      <div class="points">
+        <div class="point"><div class="point-num">1</div><div class="point-text"><strong>Find the right users — they'll keep you honest</strong><span>The people who tell you hard truths are more valuable than those who tell you what you want to hear.</span></div></div>
+        <div class="point"><div class="point-num">2</div><div class="point-text"><strong>Face users directly — don't hide behind messages</strong><span>The key to user growth is showing up. No-reply emails kill learning.</span></div></div>
+        <div class="point"><div class="point-num">3</div><div class="point-text"><strong>Listen first, build second</strong><span>Your job in these conversations is to understand problems, not pitch solutions.</span></div></div>
+      </div>
+    </div>
+  </div>
+
   <div class="slide" id="s2">
     <div class="slide-header">
       <div class="slide-num">02 · Getting in the room</div>
       <div class="slide-title">Writing <em>outreach</em> that works</div>
-
+      <div class="igc-tag">IGCPharma.com</div>
     </div>
     <div class="slide-body">
-      <p class="tagline">Gustaf's messages work because they lead with genuine connection, not a pitch. Study what makes them land.</p>
+      <p class="tagline">Gustaf's messages work because they lead with genuine connection, not a pitch.</p>
       <div class="message-bubble">
         <div class="sender">Gustaf → CFO at Motion Inc</div>
         "Hi! This is Gustaf from Airbnb. We <span class="highlight">overlapped in 2014</span> when you were on the Finance team… I'm talking to people <span class="highlight">like yourself</span> to learn as much as possible about how companies think about <span class="highlight">carbon emissions</span>. Would you have time for a <span class="highlight">20 min call</span>?"
       </div>
       <div class="two-col">
-        <div class="card do">
-          <div class="card-label">What works</div>
-          <ul>
-            <li>Shared history / connection</li>
-            <li>Clear, bounded ask (20 min)</li>
-            <li>Framed as learning, not selling</li>
-            <li>Specific topic area</li>
-          </ul>
-        </div>
-        <div class="card dont">
-          <div class="card-label">What doesn't</div>
-          <ul>
-            <li>Introducing your product</li>
-            <li>Open-ended "pick your time"</li>
-            <li>Generic "I'd love to connect"</li>
-            <li>Sending from a no-reply</li>
-          </ul>
-        </div>
+        <div class="card do"><div class="card-label">What works</div><ul><li>Shared history / connection</li><li>Clear, bounded ask (20 min)</li><li>Framed as learning, not selling</li><li>Specific topic area</li></ul></div>
+        <div class="card dont"><div class="card-label">What doesn't</div><ul><li>Introducing your product</li><li>Open-ended "pick your time"</li><li>Generic "I'd love to connect"</li><li>Sending from a no-reply</li></ul></div>
       </div>
     </div>
   </div>
 
-  <!-- SLIDE 3 -->
   <div class="slide" id="s3">
     <div class="slide-header">
       <div class="slide-num">03 · The golden rules</div>
       <div class="slide-title">Don't introduce <em>your product</em></div>
-
+      <div class="igc-tag">IGCPharma.com</div>
     </div>
     <div class="slide-body">
       <div class="big-quote">"Your job is to understand their world, not explain yours."</div>
       <div class="points">
-        <div class="point">
-          <div class="point-icon">👂</div>
-          <div class="point-text"><strong>Listen, don't talk</strong><span>Aim for 20% speaking, 80% listening. Silence after a response often prompts the most honest answers.</span></div>
-        </div>
-        <div class="point">
-          <div class="point-icon">🔓</div>
-          <div class="point-text"><strong>Ask open-ended questions only</strong><span>Yes/no questions shut conversations down. Open questions reveal mental models you didn't know existed.</span></div>
-        </div>
-        <div class="point">
-          <div class="point-icon">📺</div>
-          <div class="point-text"><strong>Ask them to screenshare</strong><span>Watching someone actually try to solve the problem reveals 10× more than what they say about it.</span></div>
-        </div>
+        <div class="point"><div class="point-icon">👂</div><div class="point-text"><strong>Listen, don't talk</strong><span>Aim for 20% speaking, 80% listening. Silence after a response often prompts the most honest answers.</span></div></div>
+        <div class="point"><div class="point-icon">🔓</div><div class="point-text"><strong>Ask open-ended questions only</strong><span>Yes/no questions shut conversations down. Open questions reveal mental models you didn't know existed.</span></div></div>
+        <div class="point"><div class="point-icon">📺</div><div class="point-text"><strong>Ask them to screenshare</strong><span>Watching someone actually try to solve the problem reveals 10× more than what they say about it.</span></div></div>
       </div>
     </div>
   </div>
 
-  <!-- SLIDE 4 -->
   <div class="slide" id="s4">
     <div class="slide-header">
       <div class="slide-num">04 · The interview script</div>
       <div class="slide-title">Questions that <em>unlock insight</em></div>
-
+      <div class="igc-tag">IGCPharma.com</div>
     </div>
     <div class="slide-body">
       <div class="q-list">
@@ -586,18 +391,15 @@
         <div class="q-item"><span class="q-num">05</span>Why is it important for your company to do X?</div>
       </div>
       <div class="divider"></div>
-      <div class="followup-hint">
-        Follow up every answer with: <strong>"What do you mean by that?"</strong> &nbsp;·&nbsp; <strong>"Can you tell me more?"</strong> &nbsp;·&nbsp; <strong>"Why is this important to you?"</strong>
-      </div>
+      <div class="followup-hint">Follow up every answer with: <strong>"What do you mean by that?"</strong> · <strong>"Can you tell me more?"</strong> · <strong>"Why is this important to you?"</strong></div>
     </div>
   </div>
 
-  <!-- SLIDE 5 -->
   <div class="slide" id="s5">
     <div class="slide-header">
       <div class="slide-num">05 · Traps to avoid</div>
       <div class="slide-title">Questions that <em>waste the call</em></div>
-
+      <div class="igc-tag">IGCPharma.com</div>
     </div>
     <div class="slide-body">
       <p class="tagline">Users have good problems but often bad solutions. They have no incentive to say no to a feature — so stop asking about features.</p>
@@ -609,37 +411,24 @@
         <div class="avoid-item"><span class="avoid-x">✗</span>Two questions at the same time</div>
         <div class="avoid-item"><span class="avoid-x">✗</span>Hypotheticals about the future</div>
       </div>
-      <div class="big-quote" style="font-size:16px;">"Users have great problems. They often have terrible solutions. Focus on the problem."</div>
+      <div class="big-quote" style="font-size:16px">"Users have great problems. They often have terrible solutions. Focus on the problem."</div>
     </div>
   </div>
 
-  <!-- SLIDE 6 -->
   <div class="slide" id="s6">
     <div class="slide-header">
       <div class="slide-num">06 · After the conversation</div>
       <div class="slide-title">Synthesize, <em>then build</em></div>
-
+      <div class="igc-tag">IGCPharma.com</div>
     </div>
     <div class="slide-body">
       <div class="step-grid">
-        <div class="step-card">
-          <div class="step-icon">🗒️</div>
-          <h4>Synthesize learnings</h4>
-          <p>Document verbatim quotes and patterns across interviews</p>
-        </div>
-        <div class="step-card">
-          <div class="step-icon">💡</div>
-          <h4>Problem–solution hypothesis</h4>
-          <p>Write one crisp sentence: "People with X problem need Y"</p>
-        </div>
-        <div class="step-card">
-          <div class="step-icon">✏️</div>
-          <h4>Sketch the MVP</h4>
-          <p>Only the smallest thing that tests your hypothesis</p>
-        </div>
+        <div class="step-card"><div class="step-icon">🗒️</div><h4>Synthesize learnings</h4><p>Document verbatim quotes and patterns across interviews</p></div>
+        <div class="step-card"><div class="step-icon">💡</div><h4>Problem–solution hypothesis</h4><p>Write one crisp sentence: "People with X problem need Y"</p></div>
+        <div class="step-card"><div class="step-icon">✏️</div><h4>Sketch the MVP</h4><p>Only the smallest thing that tests your hypothesis</p></div>
       </div>
       <div class="signal-check">
-        <p style="font-size:13px;font-weight:600;color:var(--mid);margin-bottom:2px;">Before building, validate the problem is worth solving:</p>
+        <p style="font-size:13px;font-weight:600;color:var(--mid);margin-bottom:2px">Before building, validate the problem is worth solving:</p>
         <div class="signal"><span class="signal-badge yes">Green</span>Are people paying money for solutions in this space today?</div>
         <div class="signal"><span class="signal-badge yes">Green</span>Have users tried to solve this on their own?</div>
         <div class="signal"><span class="signal-badge signal">Signal</span>Some customers will always be easier to sell to — who?</div>
@@ -647,44 +436,30 @@
     </div>
   </div>
 
-  <!-- SLIDE 7 -->
   <div class="slide" id="s7">
     <div class="slide-header">
       <div class="slide-num">07 · After the MVP</div>
       <div class="slide-title"><em>Observe</em>, don't tell them what to do</div>
-
+      <div class="igc-tag">IGCPharma.com</div>
     </div>
     <div class="slide-body">
       <div class="observe-cards">
-        <div class="obs-card">
-          <div class="obs-icon">👀</div>
-          <div class="obs-content"><h4>Watch them solve the problem</h4><p>Don't explain the product. Let them use it. Where they get stuck is your roadmap.</p></div>
-        </div>
-        <div class="obs-card">
-          <div class="obs-icon">💬</div>
-          <div class="obs-content"><h4>Prompt them to speak their mind</h4><p>"Tell me what you're thinking right now." Silence is not allowed — narration reveals assumptions.</p></div>
-        </div>
-        <div class="obs-card">
-          <div class="obs-icon">🔒</div>
-          <div class="obs-content"><h4>Create an exclusive channel</h4><p>Make early users feel special. A private Slack, early access, a direct line to you — they give more when they feel invested.</p></div>
-        </div>
-        <div class="obs-card">
-          <div class="obs-icon">🤝</div>
-          <div class="obs-content"><h4>Connect them with each other</h4><p>Users in the same problem space love meeting each other. You become the hub — and learn even more from the conversation.</p></div>
-        </div>
+        <div class="obs-card"><div class="obs-icon">👀</div><div class="obs-content"><h4>Watch them solve the problem</h4><p>Don't explain the product. Let them use it. Where they get stuck is your roadmap.</p></div></div>
+        <div class="obs-card"><div class="obs-icon">💬</div><div class="obs-content"><h4>Prompt them to speak their mind</h4><p>"Tell me what you're thinking right now." Silence is not allowed — narration reveals assumptions.</p></div></div>
+        <div class="obs-card"><div class="obs-icon">🔒</div><div class="obs-content"><h4>Create an exclusive channel</h4><p>Make early users feel special. A private Slack, early access, a direct line to you — they give more when they feel invested.</p></div></div>
+        <div class="obs-card"><div class="obs-icon">🤝</div><div class="obs-content"><h4>Connect them with each other</h4><p>Users in the same problem space love meeting each other. You become the hub — and learn even more.</p></div></div>
       </div>
     </div>
   </div>
 
-  <!-- SLIDE 8 -->
   <div class="slide" id="s8">
     <div class="slide-header">
       <div class="slide-num">08 · Real example</div>
       <div class="slide-title">Carbon emissions — <em>YC case study</em></div>
-
+      <div class="igc-tag">IGCPharma.com</div>
     </div>
     <div class="slide-body">
-      <p class="tagline">Gustaf's actual discovery questions for a potential carbon emissions startup. Notice: no product mention anywhere.</p>
+      <p class="tagline">Gustaf's actual discovery questions. Notice: no product mention anywhere.</p>
       <div class="q-list">
         <div class="q-item"><span class="q-num">→</span>Do you care about carbon emissions at your company? Why or why not?</div>
         <div class="q-item"><span class="q-num">→</span>Who inside your company would care about this problem most?</div>
@@ -693,43 +468,332 @@
         <div class="q-item"><span class="q-num">→</span>Why is this important for your company specifically?</div>
       </div>
       <div class="pill-row">
-        <span class="pill">No mention of solution</span>
-        <span class="pill">Follows open-ended format</span>
-        <span class="pill">Maps to org chart</span>
-        <span class="pill">Finds the internal champion</span>
+        <span class="pill">No mention of solution</span><span class="pill">Open-ended format</span><span class="pill">Maps to org chart</span><span class="pill">Finds the champion</span>
       </div>
     </div>
   </div>
 
-  <!-- SLIDE 9 -->
   <div class="slide" id="s9">
     <div class="slide-header">
       <div class="slide-num">09 · The one-page summary</div>
       <div class="slide-title">The <em>complete playbook</em></div>
-
+      <div class="igc-tag">IGCPharma.com</div>
     </div>
     <div class="slide-body">
       <div class="points">
-        <div class="point">
-          <div class="point-num">1</div>
-          <div class="point-text"><strong>Outreach</strong><span>Lead with connection, bound the ask, never pitch the product.</span></div>
+        <div class="point"><div class="point-num">1</div><div class="point-text"><strong>Outreach</strong><span>Lead with connection, bound the ask, never pitch the product.</span></div></div>
+        <div class="point"><div class="point-num">2</div><div class="point-text"><strong>Interview</strong><span>Open-ended questions only. Listen 80%, talk 20%. Screenshare whenever possible.</span></div></div>
+        <div class="point"><div class="point-num">3</div><div class="point-text"><strong>Don't ask</strong><span>No feature requests, no yes/no, no two questions at once, no hypotheticals.</span></div></div>
+        <div class="point"><div class="point-num">4</div><div class="point-text"><strong>Synthesize</strong><span>Problem–solution hypothesis → smallest possible MVP → validate willingness to pay.</span></div></div>
+        <div class="point"><div class="point-num">5</div><div class="point-text"><strong>After MVP</strong><span>Observe silently, prompt narration, build community, make users feel special.</span></div></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════ QUIZ 1 ══════════ -->
+  <div class="slide" id="sq1">
+    <div class="slide-header header-quiz">
+      <div class="slide-num quiz-num">⚡ Challenge 1 of 5 · +100 XP</div>
+      <div class="slide-title">Framework <em class="quiz-em">check</em></div>
+      <div class="igc-tag">Answer to continue</div>
+    </div>
+    <div class="slide-body">
+      <div class="quiz-question">A user says: "I think an app that reminds me to do brain exercises would be useful." What do you do next?</div>
+      <div class="quiz-options" id="sq1-opts">
+        <button class="quiz-opt" onclick="answerQuiz('sq1',0)">A. Ask what types of exercises they have in mind</button>
+        <button class="quiz-opt" onclick="answerQuiz('sq1',1)">B. Note it as a feature to build later</button>
+        <button class="quiz-opt" onclick="answerQuiz('sq1',2)">C. Ask about the last time they actually tried to improve their brain health</button>
+        <button class="quiz-opt" onclick="answerQuiz('sq1',3)">D. Ask "would you pay for something like that?"</button>
+      </div>
+      <div class="quiz-feedback" id="sq1-fb"></div>
+    </div>
+  </div>
+
+  <!-- ══════════ SECTION 2: RESEARCH PLAN (slides 10-11) ══════════ -->
+
+  <div class="slide" id="s10">
+    <div class="slide-header header-teal">
+      <div class="slide-num">10 · Applied research</div>
+      <div class="slide-title">Brain wellness — <em>the opportunity</em></div>
+      <div class="igc-tag">IGCPharma.com</div>
+    </div>
+    <div class="slide-body">
+      <p class="tagline">We're exploring a consumer-facing product for brain wellness, built on IGC Pharma's clinical AI expertise. Before we build, we listen.</p>
+      <div class="stat-row">
+        <div class="stat-box"><div class="stat-val">20</div><div class="stat-label">Total interviews</div></div>
+        <div class="stat-box"><div class="stat-val">25m</div><div class="stat-label">Per session</div></div>
+        <div class="stat-box"><div class="stat-val">2</div><div class="stat-label">Segments</div></div>
+        <div class="stat-box"><div class="stat-val">4–6<span style="font-size:14px">wk</span></div><div class="stat-label">Field window</div></div>
+      </div>
+      <div class="points">
+        <div class="point"><div class="point-icon">🧠</div><div class="point-text"><strong>Demand side — consumers</strong><span>Adults managing or worried about cognitive health, caregivers, and health-conscious optimizers.</span></div></div>
+        <div class="point"><div class="point-icon">🏥</div><div class="point-text"><strong>Supply side — providers</strong><span>Clinics, wellness studios, senior living, primary care, and corporate wellness that deliver brain health services today.</span></div></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="slide" id="s11">
+    <div class="slide-header header-teal">
+      <div class="slide-num">11 · The 20-interview plan</div>
+      <div class="slide-title">Who we talk to <em>and why</em></div>
+      <div class="igc-tag">IGCPharma.com</div>
+    </div>
+    <div class="slide-body">
+      <table class="plan-table">
+        <thead><tr><th>Profile</th><th>Segment</th><th>n</th><th>Why this profile</th></tr></thead>
+        <tbody>
+          <tr><td>Worried well (45–65)</td><td style="color:#1A6B45;font-weight:600;font-size:12px">Consumer</td><td><span class="n-badge n-consumer">3</span></td><td style="font-size:12px;color:var(--mid)">Family history, no symptoms. Proactive buyers.</td></tr>
+          <tr><td>Caregiver / family member</td><td style="color:#1A6B45;font-weight:600;font-size:12px">Consumer</td><td><span class="n-badge n-consumer">3</span></td><td style="font-size:12px;color:var(--mid)">High urgency, high unmet need, word-of-mouth reach.</td></tr>
+          <tr><td>Health optimizer (30–50)</td><td style="color:#1A6B45;font-weight:600;font-size:12px">Consumer</td><td><span class="n-badge n-consumer">2</span></td><td style="font-size:12px;color:var(--mid)">Already paying. Reveals WTP ceiling.</td></tr>
+          <tr><td>Post-diagnosis patient</td><td style="color:#1A6B45;font-weight:600;font-size:12px">Consumer</td><td><span class="n-badge n-consumer">2</span></td><td style="font-size:12px;color:var(--mid)">Highest need. Tests clinical usefulness.</td></tr>
+          <tr><td>Memory clinic / neurologist</td><td style="color:var(--purple);font-weight:600;font-size:12px">Provider</td><td><span class="n-badge n-provider">3</span></td><td style="font-size:12px;color:var(--mid)">Clinical authority. Potential referral channel.</td></tr>
+          <tr><td>Wellness studio / brain gym</td><td style="color:var(--purple);font-weight:600;font-size:12px">Provider</td><td><span class="n-badge n-provider">2</span></td><td style="font-size:12px;color:var(--mid)">Shows what people pay for today.</td></tr>
+          <tr><td>Senior living / adult day center</td><td style="color:var(--purple);font-weight:600;font-size:12px">Provider</td><td><span class="n-badge n-provider">2</span></td><td style="font-size:12px;color:var(--mid)">Institutional buyer. Fast path to scale.</td></tr>
+          <tr><td>Primary care / integrative medicine</td><td style="color:var(--purple);font-weight:600;font-size:12px">Provider</td><td><span class="n-badge n-provider">2</span></td><td style="font-size:12px;color:var(--mid)">First touchpoint. Drives diagnosis referrals.</td></tr>
+          <tr><td>Corporate wellness / HR</td><td style="color:var(--purple);font-weight:600;font-size:12px">Provider</td><td><span class="n-badge n-provider">1</span></td><td style="font-size:12px;color:var(--mid)">Budget holder. Fast close if pain confirmed.</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- ══════════ QUIZ 2 ══════════ -->
+  <div class="slide" id="sq2">
+    <div class="slide-header header-quiz">
+      <div class="slide-num quiz-num">⚡ Challenge 2 of 5 · +100 XP</div>
+      <div class="slide-title">Recruitment <em class="quiz-em">check</em></div>
+      <div class="igc-tag">Answer to continue</div>
+    </div>
+    <div class="slide-body">
+      <div class="quiz-question">You're recruiting consumer interviewees. A contact says they "don't really think about brain health." Do you book them?</div>
+      <div class="quiz-options" id="sq2-opts">
+        <button class="quiz-opt" onclick="answerQuiz('sq2',0)">A. No — they're clearly not the target user</button>
+        <button class="quiz-opt" onclick="answerQuiz('sq2',1)">B. Yes — that honest gap is exactly what you're trying to understand</button>
+        <button class="quiz-opt" onclick="answerQuiz('sq2',2)">C. Only if they have a family history of dementia</button>
+        <button class="quiz-opt" onclick="answerQuiz('sq2',3)">D. Only if they're over 45</button>
+      </div>
+      <div class="quiz-feedback" id="sq2-fb"></div>
+    </div>
+  </div>
+
+  <!-- ══════════ SECTION 3: CONSUMERS (slides 12-14) ══════════ -->
+
+  <div class="slide" id="s12">
+    <div class="slide-header header-consumer">
+      <div class="slide-num">12 · Consumer segment</div>
+      <div class="slide-title">Who they are — <em>4 profiles</em></div>
+      <div class="igc-tag">IGCPharma.com</div>
+    </div>
+    <div class="slide-body">
+      <p class="tagline">Recruit for variation in age, health engagement, and proximity to a diagnosis. Do <strong>not</strong> screen for brain health awareness — most people don't have a framework for it yet, and that's exactly what you're here to learn.</p>
+      <div class="profile-grid">
+        <div class="profile-card consumer-card"><div class="profile-header"><h4>Worried well (45–65)</h4><span class="n-badge n-consumer">n = 3</span></div><p>Family history, no symptoms yet. High health literacy. Proactive buyers of preventive products. Will pay for peace of mind.</p></div>
+        <div class="profile-card consumer-card"><div class="profile-header"><h4>Caregiver / family member</h4><span class="n-badge n-consumer">n = 3</span></div><p>Actively managing a loved one's cognitive decline. Emotionally invested, high unmet need. Strong word-of-mouth reach.</p></div>
+        <div class="profile-card consumer-card"><div class="profile-header"><h4>Health optimizer (30–50)</h4><span class="n-badge n-consumer">n = 2</span></div><p>Uses wearables, tracks sleep, experiments with nootropics. Already spending on imperfect solutions — reveals the WTP ceiling.</p></div>
+        <div class="profile-card consumer-card"><div class="profile-header"><h4>Post-diagnosis patient</h4><span class="n-badge n-consumer">n = 2</span></div><p>MCI or early Alzheimer's diagnosis. Seeking tools to slow progression. Tests clinical utility and surfaces accessibility needs.</p></div>
+      </div>
+      <div style="font-size:12px;color:var(--mid);padding:10px 14px;background:var(--surface);border-radius:8px;border:1px solid var(--border)"><strong style="color:var(--navy)">Where to find them:</strong> Caregiver Facebook groups, r/Alzheimers, r/longevity, memory cafés, Nextdoor, one-degree referrals from your own network.</div>
+    </div>
+  </div>
+
+  <div class="slide" id="s13">
+    <div class="slide-header header-consumer">
+      <div class="slide-num">13 · Consumer screener</div>
+      <div class="slide-title">Qualifying before <em>the call</em></div>
+      <div class="igc-tag">IGCPharma.com</div>
+    </div>
+    <div class="slide-body">
+      <p class="tagline">Screen for health-engaged people — not brain-health-aware people. That distinction doesn't exist yet for most users. You need at least 2 "yes" answers to proceed.</p>
+      <div class="screener-list">
+        <div class="screener-item"><span class="screener-q consumer">Q1</span>Do you actively track any aspect of your health? (e.g. steps, sleep, weight, blood pressure, diet)</div>
+        <div class="screener-item"><span class="screener-q consumer">Q2</span>Have you ever felt like you weren't getting enough information about what's actually happening inside your body?</div>
+        <div class="screener-item"><span class="screener-q consumer">Q3</span>Do you see a doctor or specialist for preventive care — not just when something is wrong?</div>
+        <div class="screener-item"><span class="screener-q consumer">Q4</span>Have you or someone close to you dealt with a health condition that was hard to monitor or caught later than you'd like?</div>
+      </div>
+      <div class="message-bubble" style="margin-top:6px">
+        <div class="sender">Consumer outreach template</div>
+        Hi [Name] — I'm a researcher studying how people stay on top of their health and what makes it hard. I'm not pitching anything — just trying to understand the experience. Would you have <span class="highlight">25 minutes</span> to talk?
+      </div>
+    </div>
+  </div>
+
+  <div class="slide" id="s14">
+    <div class="slide-header header-consumer">
+      <div class="slide-num">14 · Consumer interview guide</div>
+      <div class="slide-title">Questions for <em>consumers</em></div>
+      <div class="igc-tag">IGCPharma.com</div>
+    </div>
+    <div class="slide-body">
+      <div style="font-size:11px;font-weight:600;letter-spacing:0.07em;text-transform:uppercase;color:#1A6B45;margin-bottom:7px">Phase 1 — How they track health today</div>
+      <div class="q-list" style="margin-bottom:12px">
+        <div class="q-item consumer-q"><span class="q-num consumer-num">01</span>Walk me through how you keep track of your health. What do you monitor, if anything?<span class="q-tag tag-context">context</span></div>
+        <div class="q-item consumer-q"><span class="q-num consumer-num">02</span>How did you end up doing it that way? What made you start — or not start?<span class="q-tag tag-behavior">behavior</span></div>
+      </div>
+      <div style="font-size:11px;font-weight:600;letter-spacing:0.07em;text-transform:uppercase;color:#1A6B45;margin-bottom:7px">Phase 2 — Frictions &amp; gaps</div>
+      <div class="q-list" style="margin-bottom:12px">
+        <div class="q-item consumer-q"><span class="q-num consumer-num">03</span>What's the hardest thing about knowing if you're actually healthy — not just not sick, but genuinely doing well?<span class="q-tag tag-pain">pain</span></div>
+        <div class="q-item consumer-q"><span class="q-num consumer-num">04</span>Tell me about a time you felt something was off. How did you figure out what it was? What did you do?<span class="q-tag tag-behavior">behavior</span></div>
+        <div class="q-item consumer-q"><span class="q-num consumer-num">05</span>What do you wish you could check or track that you currently can't — or that feels too difficult or expensive?<span class="q-tag tag-pain">gap</span></div>
+      </div>
+      <div style="font-size:11px;font-weight:600;letter-spacing:0.07em;text-transform:uppercase;color:#1A6B45;margin-bottom:7px">Phase 3 — Priority scan</div>
+      <div class="q-list" style="margin-bottom:10px">
+        <div class="q-item consumer-q"><span class="q-num consumer-num">06</span>Imagine you could do a full health scan once a year — anything at all, not just blood work. What would you most want to know?<span class="q-tag tag-vision">priority scan</span></div>
+        <div class="q-item consumer-q"><span class="q-num consumer-num">07</span>You mentioned [X] — why that over everything else? What would knowing that change for you?<span class="q-tag tag-vision">why</span></div>
+        <div class="q-item consumer-q"><span class="q-num consumer-num">08</span>Are you paying for anything today to stay on top of your health — devices, apps, specialists, supplements?<span class="q-tag tag-wtp">willingness to pay</span></div>
+      </div>
+      <div class="followup-hint" style="border-left:3px solid #1A6B45"><strong>If brain / cognition hasn't come up by Q6:</strong> "What about how your brain or memory is doing — is that something you think about?" Note whether it surfaces naturally or only when introduced.</div>
+    </div>
+  </div>
+
+  <!-- ══════════ QUIZ 3 ══════════ -->
+  <div class="slide" id="sq3">
+    <div class="slide-header header-quiz">
+      <div class="slide-num quiz-num">⚡ Challenge 3 of 5 · +100 XP</div>
+      <div class="slide-title">Consumer <em class="quiz-em">check</em></div>
+      <div class="igc-tag">Answer to continue</div>
+    </div>
+    <div class="slide-body">
+      <div class="quiz-question">You're in a consumer interview. The person answers Q1–Q5 without mentioning cognition or memory at all. What do you do at Q6?</div>
+      <div class="quiz-options" id="sq3-opts">
+        <button class="quiz-opt" onclick="answerQuiz('sq3',0)">A. Pivot — this person isn't the right user for this research</button>
+        <button class="quiz-opt" onclick="answerQuiz('sq3',1)">B. Ask the priority scan question and note whether brain health surfaces on its own</button>
+        <button class="quiz-opt" onclick="answerQuiz('sq3',2)">C. Introduce MINT-AD and ask what they think of it</button>
+        <button class="quiz-opt" onclick="answerQuiz('sq3',3)">D. End the interview — you've already got what you need</button>
+      </div>
+      <div class="quiz-feedback" id="sq3-fb"></div>
+    </div>
+  </div>
+
+  <!-- ══════════ SECTION 4: PROVIDERS (slides 15-17) ══════════ -->
+
+  <div class="slide" id="s15">
+    <div class="slide-header header-provider">
+      <div class="slide-num">15 · Provider segment</div>
+      <div class="slide-title">Who they are — <em>5 profiles</em></div>
+      <div class="igc-tag">IGCPharma.com</div>
+    </div>
+    <div class="slide-body">
+      <p class="tagline">Providers reveal what people already pay for, what gaps exist in delivery, and which institutions could become distribution partners or customers.</p>
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:10px">
+        <div class="profile-card provider-card"><div class="profile-header"><h4>Memory clinic / neurologist</h4><span class="n-badge n-provider">n = 3</span></div><p>Clinical authority. Unmet patient education and between-visit monitoring needs. Potential referral engine.</p></div>
+        <div class="profile-card provider-card"><div class="profile-header"><h4>Wellness studio / brain gym</h4><span class="n-badge n-provider">n = 2</span></div><p>BrainHQ-style operators, mindfulness + cognitive studios. Consumer-facing. Shows what the market accepts today.</p></div>
+        <div class="profile-card provider-card"><div class="profile-header"><h4>Senior living / adult day center</h4><span class="n-badge n-provider">n = 2</span></div><p>Operations staff managing residents' cognitive engagement. Institutional buyer with group licensing potential.</p></div>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+        <div class="profile-card provider-card"><div class="profile-header"><h4>Primary care / integrative medicine</h4><span class="n-badge n-provider">n = 2</span></div><p>First touchpoint before diagnosis. Drives referrals. Interested in preventive tools that extend the visit.</p></div>
+        <div class="profile-card provider-card"><div class="profile-header"><h4>Corporate wellness / HR</h4><span class="n-badge n-provider">n = 1</span></div><p>Benefits buyers with budget. Move fast when confirmed. Reaching 1 buyer can unlock hundreds of users.</p></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="slide" id="s16">
+    <div class="slide-header header-provider">
+      <div class="slide-num">16 · Provider screener</div>
+      <div class="slide-title">Qualifying before <em>the call</em></div>
+      <div class="igc-tag">IGCPharma.com</div>
+    </div>
+    <div class="slide-body">
+      <p class="tagline">Ask these before scheduling. Providers who answer no to all four are outside the problem space — don't book them.</p>
+      <div class="screener-list">
+        <div class="screener-item"><span class="screener-q provider">Q1</span>Does your organization currently offer programs or services related to cognitive or brain health?</div>
+        <div class="screener-item"><span class="screener-q provider">Q2</span>Do clients or patients regularly ask you about brain health or memory-related concerns?</div>
+        <div class="screener-item"><span class="screener-q provider">Q3</span>Are you using any digital tools or software to support cognitive wellness programs today?</div>
+        <div class="screener-item"><span class="screener-q provider">Q4</span>Do you track or measure any cognitive outcomes for the people you serve?</div>
+      </div>
+      <div class="message-bubble" style="margin-top:6px">
+        <div class="sender">Provider outreach template</div>
+        Hi [Name] — I'm a researcher studying how organizations approach brain health. Your work at <span class="highlight">[Organization]</span> caught my attention. I'm not selling anything — I want to understand the challenges in delivering cognitive wellness services today. 25 minutes?
+      </div>
+    </div>
+  </div>
+
+  <div class="slide" id="s17">
+    <div class="slide-header header-provider">
+      <div class="slide-num">17 · Provider interview guide</div>
+      <div class="slide-title">Questions for <em>providers</em></div>
+      <div class="igc-tag">IGCPharma.com</div>
+    </div>
+    <div class="slide-body">
+      <div class="q-list">
+        <div class="q-item provider-q"><span class="q-num provider-num">01</span>Describe your current cognitive wellness offering — what does a client experience from first contact to ongoing care?<span class="q-tag tag-context">journey</span></div>
+        <div class="q-item provider-q"><span class="q-num provider-num">02</span>What's the hardest part of delivering this today?<span class="q-tag tag-pain">pain</span></div>
+        <div class="q-item provider-q"><span class="q-num provider-num">03</span>How do clients typically discover they have a cognitive health concern — is it self-referred or referred by someone else?<span class="q-tag tag-behavior">behavior</span></div>
+        <div class="q-item provider-q"><span class="q-num provider-num">04</span>Are you currently paying for any software, assessments, or platforms to support this work?<span class="q-tag tag-wtp">willingness to pay</span></div>
+        <div class="q-item provider-q"><span class="q-num provider-num">05</span>What do clients say is hardest for them between visits or sessions?<span class="q-tag tag-pain">gap</span></div>
+        <div class="q-item provider-q"><span class="q-num provider-num">06</span>Who inside your organization cares most about solving this problem?<span class="q-tag tag-vision">champion</span></div>
+        <div class="q-item provider-q"><span class="q-num provider-num">07</span>If you could give a client something to use at home that actually worked, what would it need to do?<span class="q-tag tag-vision">vision</span></div>
+      </div>
+      <div class="followup-hint">Follow every answer with: <strong>"What do you mean by that?"</strong> · <strong>"Why is this important to you?"</strong></div>
+    </div>
+  </div>
+
+  <!-- ══════════ QUIZ 4 ══════════ -->
+  <div class="slide" id="sq4">
+    <div class="slide-header header-quiz">
+      <div class="slide-num quiz-num">⚡ Challenge 4 of 5 · +100 XP</div>
+      <div class="slide-title">Provider <em class="quiz-em">check</em></div>
+      <div class="igc-tag">Answer to continue</div>
+    </div>
+    <div class="slide-body">
+      <div class="quiz-question">A neurologist tells you they're "too busy to think about between-visit patient monitoring." What's your best next question?</div>
+      <div class="quiz-options" id="sq4-opts">
+        <button class="quiz-opt" onclick="answerQuiz('sq4',0)">A. "Would you buy a tool that solved that problem for you?"</button>
+        <button class="quiz-opt" onclick="answerQuiz('sq4',1)">B. "Tell me about the last time a patient's condition changed unexpectedly between visits."</button>
+        <button class="quiz-opt" onclick="answerQuiz('sq4',2)">C. "What features would help most with your workflow?"</button>
+        <button class="quiz-opt" onclick="answerQuiz('sq4',3)">D. "How many patients do you see per week?"</button>
+      </div>
+      <div class="quiz-feedback" id="sq4-fb"></div>
+    </div>
+  </div>
+
+  <!-- ══════════ SECTION 5: SYNTHESIS (slide 18) ══════════ -->
+
+  <div class="slide" id="s18">
+    <div class="slide-header">
+      <div class="slide-num">18 · Synthesis</div>
+      <div class="slide-title">After 20 interviews — <em>what to build</em></div>
+      <div class="igc-tag">IGCPharma.com</div>
+    </div>
+    <div class="slide-body">
+      <div class="step-grid" style="margin-bottom:12px">
+        <div class="step-card"><div class="step-icon">🗒️</div><h4>Capture verbatim</h4><p>Write down exact words — not summaries. The user's language is your copy.</p></div>
+        <div class="step-card"><div class="step-icon">🔁</div><h4>Find 3+ repeats</h4><p>Any pain or behavior mentioned by 3+ people across both segments is signal.</p></div>
+        <div class="step-card"><div class="step-icon">💡</div><h4>Write the hypothesis</h4><p>"People with [X] need [Y] but today they [workaround]."</p></div>
+      </div>
+      <div class="signal-check">
+        <p style="font-size:13px;font-weight:600;color:var(--mid);margin-bottom:4px">Green lights before building:</p>
+        <div class="signal"><span class="signal-badge yes">Green</span>People are already paying for imperfect brain health solutions</div>
+        <div class="signal"><span class="signal-badge yes">Green</span>Users or providers built their own workarounds</div>
+        <div class="signal"><span class="signal-badge yes">Green</span>The problem was mentioned before you asked about it</div>
+        <div class="signal"><span class="signal-badge signal">Signal</span>They introduced you to someone else with the same problem</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════ QUIZ 5 / FINAL ══════════ -->
+  <div class="slide" id="sq5">
+    <div class="slide-header header-quiz">
+      <div class="slide-num quiz-num">⚡ Final Challenge · +100 XP</div>
+      <div class="slide-title">Synthesis <em class="quiz-em">check</em></div>
+      <div class="igc-tag">Last one!</div>
+    </div>
+    <div class="slide-body">
+      <div class="quiz-question">After 20 interviews, 6 people mention they tried to track their memory or focus but gave up because nothing gave them useful feedback. What does this tell you?</div>
+      <div class="quiz-options" id="sq5-opts">
+        <button class="quiz-opt" onclick="answerQuiz('sq5',0)">A. 6 out of 20 isn't enough signal — keep interviewing</button>
+        <button class="quiz-opt" onclick="answerQuiz('sq5',1)">B. People built workarounds that failed — strong green light, the need is real and unmet</button>
+        <button class="quiz-opt" onclick="answerQuiz('sq5',2)">C. The product needs better UX before launch</button>
+        <button class="quiz-opt" onclick="answerQuiz('sq5',3)">D. The market doesn't exist yet — wait for the category to mature</button>
+      </div>
+      <div class="quiz-feedback" id="sq5-fb"></div>
+      <div id="final-score" style="display:none;margin-top:4px">
+        <div style="text-align:center;margin-bottom:14px">
+          <div class="score-ring">
+            <svg viewBox="0 0 120 120"><circle cx="60" cy="60" r="50" fill="none" stroke="#E1EBF2" stroke-width="10"/><circle id="score-arc" cx="60" cy="60" r="50" fill="none" stroke="#0E7490" stroke-width="10" stroke-dasharray="314" stroke-dashoffset="314" style="transition:stroke-dashoffset 1s ease"/></svg>
+            <div class="score-ring-inner"><div class="score-ring-val" id="final-xp-val">0</div><div class="score-ring-lbl">XP earned</div></div>
+          </div>
+          <p style="font-size:14px;color:var(--mid);margin-top:10px" id="final-msg"></p>
         </div>
-        <div class="point">
-          <div class="point-num">2</div>
-          <div class="point-text"><strong>Interview</strong><span>Open-ended questions only. Listen 80%, talk 20%. Screenshare whenever possible.</span></div>
-        </div>
-        <div class="point">
-          <div class="point-num">3</div>
-          <div class="point-text"><strong>Don't ask</strong><span>No feature requests, no yes/no, no two questions at once, no hypotheticals.</span></div>
-        </div>
-        <div class="point">
-          <div class="point-num">4</div>
-          <div class="point-text"><strong>Synthesize</strong><span>Problem–solution hypothesis → smallest possible MVP → validate willingness to pay.</span></div>
-        </div>
-        <div class="point">
-          <div class="point-num">5</div>
-          <div class="point-text"><strong>After MVP</strong><span>Observe silently, prompt narration, build community, make users feel special.</span></div>
-        </div>
+        <div class="final-badges" id="final-badges-display"></div>
       </div>
     </div>
   </div>
@@ -738,42 +802,111 @@
     <button class="nav-btn" id="prev-btn" onclick="navigate(-1)" disabled>← Back</button>
     <button class="nav-btn primary" id="next-btn" onclick="navigate(1)">Next →</button>
   </div>
-
   <div class="kb-hint">Use <span class="kbd">←</span> <span class="kbd">→</span> arrow keys to navigate</div>
 </div>
 
 <script>
-  const total = 9;
-  let cur = 1;
-  const dotsEl = document.getElementById('dots');
+  // ── Slide order ──
+  const SLIDES = ['s1','s2','s3','s4','s5','s6','s7','s8','s9','sq1','s10','s11','sq2','s12','s13','s14','sq3','s15','s16','s17','sq4','s18','sq5'];
+  const TOTAL = SLIDES.length;
+  const QUIZ_SLIDES = ['sq1','sq2','sq3','sq4','sq5'];
+  const SECTION_OF = {s1:0,s2:0,s3:0,s4:0,s5:0,s6:0,s7:0,s8:0,s9:0,sq1:0,s10:1,s11:1,sq2:1,s12:2,s13:2,s14:2,sq3:2,s15:3,s16:3,s17:3,sq4:3,s18:4,sq5:4};
+  const QUIZ_CORRECT = {sq1:2, sq2:1, sq3:1, sq4:1, sq5:1};
+  const QUIZ_EXPLAIN = {
+    sq1: "Users suggest solutions all the time — that's their job. Yours is to get behind the solution to the underlying behavior. Asking 'tell me about the last time' surfaces the real story.",
+    sq2: "Most people don't have a brain health framework yet. That honest gap is exactly what you're exploring. Their 'I don't think about it' is more valuable than someone who already has opinions.",
+    sq3: "Whether cognition surfaces naturally in the priority scan question is one of the most important data points you'll collect. Let it emerge — or not. Both answers matter.",
+    sq4: "'Too busy' signals pain, not disinterest. The follow-up should surface a concrete story — that's where the real need lives. Never jump to solutions or feature questions.",
+    sq5: "People building workarounds that fail is one of the strongest signals possible. It confirms demand exists and that current solutions are broken. That's exactly where a new product lives."
+  };
+  const BADGES = [
+    {id:'bp0', name:'Framework Master',  sub:'Completed the framework section', emoji:'🎓'},
+    {id:'bp1', name:'Research Strategist',sub:'Completed the research plan',    emoji:'🎯'},
+    {id:'bp2', name:'Consumer Whisperer',sub:'Completed the consumer section',  emoji:'👂'},
+    {id:'bp3', name:'Provider Expert',   sub:'Completed the provider section',  emoji:'🏥'},
+    {id:'bp4', name:'Synthesizer',       sub:'Completed the synthesis section', emoji:'🧠'},
+    {id:'bp5', name:'Sharp Shooter',     sub:'3 correct answers in a row',      emoji:'⭐'},
+    {id:'bp6', name:'Brain Wellness Pro',sub:'All 5 challenges completed',      emoji:'🔥'},
+  ];
+  const BADGE_TRIGGERS = {sq1:'bp0', sq2:'bp1', sq3:'bp2', sq4:'bp3', sq5:'bp4'};
 
-  for (let i = 1; i <= total; i++) {
+  const MAX_XP = 500;
+  const game = { xp:0, streak:0, badges:new Set(), quizState:{} };
+  let curIdx = 0;
+
+  // ── Build dots ──
+  const dotsEl = document.getElementById('dots');
+  const breakBefore = new Set([10,12,17,21]);
+  SLIDES.forEach((id,i) => {
+    if(breakBefore.has(i)){ const br=document.createElement('div'); br.className='dot section-break'; dotsEl.appendChild(br); }
     const d = document.createElement('button');
-    d.className = 'dot' + (i === 1 ? ' active' : '');
-    d.setAttribute('aria-label', 'Go to slide ' + i);
+    const isQ = QUIZ_SLIDES.includes(id);
+    d.className = 'dot' + (isQ ? ' quiz-dot' : '') + (i===0?' active':'');
+    d.setAttribute('aria-label','Slide '+(i+1));
+    d.id = 'dot'+i;
     d.onclick = () => goTo(i);
     dotsEl.appendChild(d);
-  }
-
-  function goTo(n) {
-    document.getElementById('s' + cur).classList.remove('active');
-    dotsEl.children[cur - 1].classList.remove('active');
-    cur = Math.max(1, Math.min(total, n));
-    document.getElementById('s' + cur).classList.add('active');
-    dotsEl.children[cur - 1].classList.add('active');
-    document.getElementById('slide-label').textContent = 'Slide ' + cur + ' of ' + total;
-    document.getElementById('progress').style.width = (cur / total * 100) + '%';
-    document.getElementById('prev-btn').disabled = cur === 1;
-    document.getElementById('next-btn').disabled = cur === total;
-    document.getElementById('next-btn').textContent = cur === total ? '✓ Done' : 'Next →';
-  }
-
-  function navigate(dir) { goTo(cur + dir); }
-
-  document.addEventListener('keydown', e => {
-    if (e.key === 'ArrowRight' || e.key === 'ArrowDown') navigate(1);
-    if (e.key === 'ArrowLeft'  || e.key === 'ArrowUp')   navigate(-1);
   });
-</script>
-</body>
-</html>
+
+  // ── Build section pips ──
+  const trackEl = document.getElementById('section-track');
+  for(let i=0;i<5;i++){
+    const p = document.createElement('div');
+    p.className='section-pip'+(i===0?' active':'');
+    p.id='sp'+i;
+    trackEl.appendChild(p);
+  }
+
+  function updateHUD(){
+    const pct = Math.min(game.xp/MAX_XP*100,100);
+    document.getElementById('xp-fill').style.width = pct+'%';
+    document.getElementById('xp-val').textContent = game.xp;
+    document.getElementById('streak-val').textContent = game.streak;
+  }
+
+  function showXPBurst(amount){
+    const el = document.getElementById('xp-burst');
+    el.textContent = '+'+amount+' XP';
+    el.classList.remove('pop');
+    void el.offsetWidth;
+    el.classList.add('pop');
+  }
+
+  function awardBadge(bpId){
+    if(game.badges.has(bpId)) return;
+    game.badges.add(bpId);
+    document.getElementById(bpId).classList.add('earned');
+    const meta = BADGES.find(b=>b.id===bpId);
+    if(!meta) return;
+    const popup = document.getElementById('badge-popup');
+    document.getElementById('bp-icon').textContent = meta.emoji;
+    document.getElementById('bp-title').textContent = 'Badge unlocked: '+meta.name;
+    document.getElementById('bp-sub').textContent = meta.sub;
+    popup.classList.add('show');
+    setTimeout(()=>popup.classList.remove('show'), 3200);
+  }
+
+  function checkSharpShooter(){
+    const correct = Object.values(game.quizState).filter(v=>v==='correct').length;
+    if(correct>=3){ setTimeout(()=>awardBadge('bp5'),600); }
+  }
+
+  function checkBrainWellnessPro(){
+    const allDone = QUIZ_SLIDES.every(q=>game.quizState[q]);
+    if(allDone){ setTimeout(()=>awardBadge('bp6'),1200); }
+  }
+
+  function answerQuiz(qid, choiceIdx){
+    if(game.quizState[qid]) return;
+    const isCorrect = choiceIdx === QUIZ_CORRECT[qid];
+    game.quizState[qid] = isCorrect ? 'correct' : 'wrong';
+
+    // Style buttons
+    const opts = document.getElementById(qid+'-opts').querySelectorAll('.quiz-opt');
+    opts.forEach((btn,i)=>{
+      btn.disabled = true;
+      if(i===QUIZ_CORRECT[qid]) btn.classList.add('correct-reveal');
+      else if(i===choiceIdx && !isCorrect) btn.classList.add('wrong-reveal');
+    });
+
+    // Fee
